@@ -453,6 +453,7 @@ const moveFields = () => {
     '[discover-element="locations-checkboxes-tab"]'
   );
 
+  // Adding logic to check child categories of locations
   locationsCheckboxesWrapper?.addEventListener('click', (e) => {
     // console.log('clicked', e.target);
     const filtersTabPane = e.target.closest('.home_filters_tab-pane');
@@ -532,12 +533,6 @@ const moveFields = () => {
     // Restore scroll position because clicking on checkboxes scrolls the element which is set to overflow
     filtersTabPane.scrollTop = scrollPostion;
   });
-
-  // Logic to remove duplicate hidden tags
-  // const tagsWrapper = document.querySelector('.home_opp_tags');
-  // tagsWrapper.addEventListener('click', (e) => {
-  //   const allTags =
-  // });
 
   // console.log({ fields, fieldCategories });
 };
