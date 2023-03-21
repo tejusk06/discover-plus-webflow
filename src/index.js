@@ -293,6 +293,8 @@ const moveFields = () => {
   const fields = document.querySelectorAll('[discover-element="field-wrap"]');
   const fieldCategories = document.querySelectorAll('[discover-element="field-category-wrap"]');
 
+  // Inserting child fields into Category fields
+
   fieldCategories.forEach((eachFieldCategory) => {
     fields.forEach((eachField) => {
       if (
@@ -315,6 +317,7 @@ const moveFields = () => {
     '[discover-element="location-category-wrap"]'
   );
 
+  // Inserting child locations into Category locations
   locationCategories.forEach((eachLocationCategory) => {
     locations.forEach((eachLocation) => {
       if (
@@ -343,9 +346,26 @@ const moveFields = () => {
     }
   });
 
-  // Adding logic to check child categories
+  // Remove Duplicate tagss
+  const removeDuplicateTags = () => {
+    setTimeout(() => {
+      const tagTexts = [];
+      const allTags = document.querySelectorAll('.home_opp_tag-template');
+
+      allTags.forEach((eachTag) => {
+        const tagText = eachTag.querySelector('.home_opp_tag-text');
+        if (tagTexts.includes(tagText.innerHTML)) {
+          eachTag.style.display = 'none';
+        } else {
+          tagTexts.push(tagText.innerHTML);
+        }
+      });
+    }, 100);
+  };
+
+  // Adding logic to check child categories of fields
   const fieldsCheckboxesWrapper = document.querySelector(
-    '[discover-element="fields-checkboxes-wrapper"]'
+    '[discover-element="fields-checkboxes-dropdown"]'
   );
 
   fieldsCheckboxesWrapper?.addEventListener('click', (e) => {
@@ -373,6 +393,9 @@ const moveFields = () => {
             eachChildCheckbox.click();
           }
         });
+
+        // Remove Duplicate tag templates
+        removeDuplicateTags();
       } else {
         // Uncheck all child checkboxes if category was unchecked
         childCheckboxes.forEach((eachChildCheckbox) => {
@@ -424,6 +447,97 @@ const moveFields = () => {
     // Restore scroll position because clicking on checkboxes scrolls the element which is set to overflow
     filtersList.scrollTop = scrollPostion;
   });
+
+  // Adding logic to check child categories of fields
+  const locationsCheckboxesWrapper = document.querySelector(
+    '[discover-element="locations-checkboxes-tab"]'
+  );
+
+  locationsCheckboxesWrapper?.addEventListener('click', (e) => {
+    // console.log('clicked', e.target);
+    const filtersTabPane = e.target.closest('.home_filters_tab-pane');
+    const scrollPostion = filtersTabPane.scrollTop;
+
+    if (e.target.classList.contains('home_filters_category-overlay')) {
+      // If user clicks on a category checkbox overlay
+
+      const categoryCheckbox = e.target.parentElement.querySelector('.home_filters_checkbox-field');
+
+      // Click on the actual category checkbox
+      categoryCheckbox.click();
+
+      const childCheckboxes = categoryCheckbox.parentElement.parentElement
+        .querySelector('.home_filters_location-wrap')
+        .querySelectorAll('.home_filters_checkbox-field');
+
+      // Check if category was checked
+      if (categoryCheckbox.classList.contains('fs-cmsfilter_active')) {
+        // Check all child checkboxes if category was checked
+        childCheckboxes.forEach((eachChildCheckbox) => {
+          if (!eachChildCheckbox.classList.contains('fs-cmsfilter_active')) {
+            eachChildCheckbox.click();
+          }
+        });
+
+        // Remove Duplicate tag templates
+        removeDuplicateTags();
+      } else {
+        // Uncheck all child checkboxes if category was unchecked
+        childCheckboxes.forEach((eachChildCheckbox) => {
+          if (eachChildCheckbox.classList.contains('fs-cmsfilter_active')) {
+            eachChildCheckbox.click();
+          }
+        });
+      }
+    } else if (e.target.classList.contains('home_filters_child-overlay')) {
+      // If user clicks on a child checkbox
+
+      const childCheckbox = e.target.parentElement.querySelector('.home_filters_checkbox-field');
+
+      // Get Category checkbox
+      const categoryCheckbox = childCheckbox
+        .closest('.home_filters_item-wrap')
+        .querySelector('.home_filters_category-holder')
+        .querySelector('.home_filters_checkbox-field');
+
+      childCheckbox.click();
+
+      if (childCheckbox.classList.contains('fs-cmsfilter_active')) {
+        // if child checkbox was checked
+        if (!categoryCheckbox.classList.contains('fs-cmsfilter_active')) {
+          // make sure parent is checked
+          categoryCheckbox.click();
+        }
+      } else {
+        // If child was unchecked
+        const childCheckboxes = childCheckbox
+          .closest('.home_filters_location-wrap')
+          .querySelectorAll('.home_filters_checkbox-field');
+        let allUnchecked = true;
+
+        childCheckboxes.forEach((eachChildCheckbox) => {
+          if (eachChildCheckbox.classList.contains('fs-cmsfilter_active')) {
+            allUnchecked = false;
+          }
+        });
+
+        // Uncheck the parent if all child checkboxes are unchecked
+        if (allUnchecked) {
+          if (categoryCheckbox.classList.contains('fs-cmsfilter_active')) {
+            categoryCheckbox.click();
+          }
+        }
+      }
+    }
+    // Restore scroll position because clicking on checkboxes scrolls the element which is set to overflow
+    filtersTabPane.scrollTop = scrollPostion;
+  });
+
+  // Logic to remove duplicate hidden tags
+  // const tagsWrapper = document.querySelector('.home_opp_tags');
+  // tagsWrapper.addEventListener('click', (e) => {
+  //   const allTags =
+  // });
 
   // console.log({ fields, fieldCategories });
 };
