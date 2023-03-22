@@ -1,6 +1,8 @@
 // import type { CMSFilters } from '../../types/CMSFilters';
 // import type { Product } from './types';
 
+import { doc } from 'prettier';
+
 /**
  * Populate CMS Data from an external API.
  */
@@ -199,21 +201,7 @@ const createItem = (eachOpp, templateElement) => {
     eachOpp.gradeLevelValues.split(',').forEach((eachGrade) => {
       const newGrade = gradeFilter.cloneNode(true);
 
-      if (eachGrade.trim() === 'Elementary School') {
-        newGrade.textContent = -1;
-      } else if (eachGrade.trim() === 'Middle School') {
-        newGrade.textContent = 0;
-      } else if (eachGrade.trim() === 'High School') {
-        newGrade.textContent = 1;
-      } else if (eachGrade.trim() === 'Undergraduate') {
-        newGrade.textContent = 13;
-      } else if (eachGrade.trim() === 'Graduate') {
-        newGrade.textContent = 14;
-      } else if (eachGrade.trim() === 'Post-Graduate') {
-        newGrade.textContent = 15;
-      } else {
-        newGrade.textContent = parseInt(eachGrade.trim().replace(/\D/g, ''));
-      }
+      newGrade.textContent = eachGrade.trim();
 
       gradeFilter.parentElement.append(newGrade);
     });
@@ -346,7 +334,7 @@ const moveFields = () => {
     }
   });
 
-  // Remove Duplicate tagss
+  // Remove Duplicate tags
   const removeDuplicateTags = () => {
     setTimeout(() => {
       const tagTexts = [];
@@ -448,12 +436,41 @@ const moveFields = () => {
     filtersList.scrollTop = scrollPostion;
   });
 
-  // Adding logic to check child categories of fields
+  // Adding logic to mirror click locations categories
+
+  const locationBoxes = document
+    .querySelector('.home_filters_locations-wrapper')
+    .querySelectorAll('.home_filter_checkbox-region-wrap');
+
+  const locationCategoriesWrap = document.querySelectorAll(
+    '[discover-element="location-category-wrap"]'
+  );
+
+  locationBoxes.forEach((eachLocationBoxOverlay) => {
+    eachLocationBoxOverlay.addEventListener('click', (e) => {
+      if (e.target.parentElement.classList.contains('home_filter_checkbox-region-wrap')) {
+        const boxCategoryChecked = e.target.parentElement.querySelector(
+          '.home_filters_checkbox-label'
+        ).innerHTML;
+
+        locationCategoriesWrap.forEach((eachLocationCategory) => {
+          const eachLocationCategoryName = eachLocationCategory
+            .querySelector('.home_filters_category-holder')
+            .querySelector('.home_filters_checkbox-label').innerHTML;
+
+          if (boxCategoryChecked === eachLocationCategoryName) {
+            eachLocationCategory.querySelector('.home_filters_category-overlay').click();
+          }
+        });
+      }
+    });
+  });
+
+  // Adding logic to check child categories of Locations
   const locationsCheckboxesWrapper = document.querySelector(
     '[discover-element="locations-checkboxes-tab"]'
   );
 
-  // Adding logic to check child categories of locations
   locationsCheckboxesWrapper?.addEventListener('click', (e) => {
     // console.log('clicked', e.target);
     const filtersTabPane = e.target.closest('.home_filters_tab-pane');
@@ -463,9 +480,25 @@ const moveFields = () => {
       // If user clicks on a category checkbox overlay
 
       const categoryCheckbox = e.target.parentElement.querySelector('.home_filters_checkbox-field');
+      const categoryCheckboxName = categoryCheckbox.querySelector(
+        '.home_filters_checkbox-label'
+      ).innerHTML;
 
       // Click on the actual category checkbox
       categoryCheckbox.click();
+
+      // Remove active class from matching location box
+      locationBoxes.forEach((eachLocationBoxOverlay) => {
+        const actualCheckbox = eachLocationBoxOverlay.parentElement.querySelector(
+          '.home_filter_checkbox-region'
+        );
+        if (
+          categoryCheckboxName ===
+          actualCheckbox.querySelector('.home_filters_checkbox-label').innerHTML
+        ) {
+          actualCheckbox.classList.toggle('fs-cmsfilter_active');
+        }
+      });
 
       const childCheckboxes = categoryCheckbox.parentElement.parentElement
         .querySelector('.home_filters_location-wrap')
@@ -533,6 +566,4 @@ const moveFields = () => {
     // Restore scroll position because clicking on checkboxes scrolls the element which is set to overflow
     filtersTabPane.scrollTop = scrollPostion;
   });
-
-  // console.log({ fields, fieldCategories });
 };
