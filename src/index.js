@@ -262,13 +262,20 @@ const createItem = (eachOpp, templateElement) => {
       newAmount.textContent = eachAmount.trim();
       costFilter.parentElement.append(newAmount);
     });
+  }
+
+  if (costFilter && eachOpp.cost) {
+    eachOpp.cost.split(',').forEach((eachCost) => {
+      const newCost = costFilter.cloneNode(true);
+      newCost.textContent = eachCost.trim();
+      costFilter.parentElement.append(newCost);
+    });
+
     costFilter.removeAttribute('fs-cmsfilter-field');
   }
 
   if (financialAidFilter)
     financialAidFilter.textContent = eachOpp.financialAid ? 'Financial Aid' : '';
-  // if (category) category.textContent = eachOpp.category;
-  // if (description) description.textContent = eachOpp.description;
 
   return newItem;
 };
