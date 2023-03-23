@@ -50,6 +50,11 @@ window.fsAttributes.push([
 
     // Sync the CMSFilters instance with the new created filters
     filtersInstance.storeFiltersData();
+
+    // listInstance.on('renderitems', (renderedItems) => {
+    //   console.log('rendered');
+    //   addEventListeners();
+    // });
   },
 ]);
 
@@ -494,7 +499,7 @@ const moveFields = () => {
       // Click on the actual category checkbox
       categoryCheckbox.click();
 
-      // Remove active class from matching location box
+      // Remove/Add active class from matching location box
       locationBoxes.forEach((eachLocationBoxOverlay) => {
         const actualCheckbox = eachLocationBoxOverlay.parentElement.querySelector(
           '.home_filter_checkbox-region'
@@ -543,11 +548,32 @@ const moveFields = () => {
 
       childCheckbox.click();
 
+      // Remove/Add active class from matching location box
+      const categoryCheckboxName = categoryCheckbox.querySelector(
+        '.home_filters_checkbox-label'
+      ).innerHTML;
+
+      const toggleLocationBox = () => {
+        locationBoxes.forEach((eachLocationBoxOverlay) => {
+          const actualCheckbox = eachLocationBoxOverlay.parentElement.querySelector(
+            '.home_filter_checkbox-region'
+          );
+          if (
+            categoryCheckboxName ===
+            actualCheckbox.querySelector('.home_filters_checkbox-label').innerHTML
+          ) {
+            actualCheckbox.classList.toggle('fs-cmsfilter_active');
+          }
+        });
+      };
+
       if (childCheckbox.classList.contains('fs-cmsfilter_active')) {
         // if child checkbox was checked
         if (!categoryCheckbox.classList.contains('fs-cmsfilter_active')) {
           // make sure parent is checked
           categoryCheckbox.click();
+          // Add active class to matching location box
+          toggleLocationBox();
         }
       } else {
         // If child was unchecked
@@ -566,6 +592,8 @@ const moveFields = () => {
         if (allUnchecked) {
           if (categoryCheckbox.classList.contains('fs-cmsfilter_active')) {
             categoryCheckbox.click();
+            // Remove active class from matching location box
+            toggleLocationBox();
           }
         }
       }
@@ -573,4 +601,82 @@ const moveFields = () => {
     // Restore scroll position because clicking on checkboxes scrolls the element which is set to overflow
     filtersTabPane.scrollTop = scrollPostion;
   });
+
+  // Adding logic to uncheck field/location category when the tag is unchecked
+  const categoryHolders = document.querySelectorAll('.home_filters_category-holder');
+
+  categoryHolders.forEach((eachCategoryHolder) => {
+    const eachCategoryCheckbox = eachCategoryHolder.querySelector('.home_filters_checkbox-field');
+    eachCategoryCheckbox.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT') {
+        const categoryLabel = e.target.parentElement.querySelector(
+          '.home_filters_checkbox-label'
+        ).innerHTML;
+        console.log({ categoryLabel, target: e.target.checked });
+
+        if (!e.target.checked) {
+          // If category was unchecked
+          const fieldCheckboxesWrap = e.target
+            .closest('.home_filters_item-wrap')
+            .querySelector('.home_filters_fields-wrap');
+
+          const locationCheckboxesWrap = e.target
+            .closest('.home_filters_item-wrap')
+            .querySelector('.home_filters_location-wrap');
+
+          // If a field category was unchecked
+          if (fieldCheckboxesWrap) {
+            const fieldCheckboxes = fieldCheckboxesWrap?.querySelectorAll(
+              '.home_filters_checkbox-field'
+            );
+
+            fieldCheckboxes.forEach((eachField, index) => {
+              if (eachField.classList.contains('fs-cmsfilter_active')) {
+                // Uncheck the children that were checked after a delay of 70 ms between each to allow time to react
+                setTimeout(() => {
+                  eachField.click();
+                }, 70 * index);
+              }
+            });
+          }
+
+          if (locationCheckboxesWrap) {
+            // Remove active class from location
+            const categoryCheckboxName = e.target
+              .closest('.home_filters_item-wrap')
+              .querySelector('.home_filters_category-holder')
+              .querySelector('.home_filters_checkbox-label').innerHTML;
+
+            // Remove/Add active class from matching location box
+            locationBoxes.forEach((eachLocationBoxOverlay) => {
+              const actualCheckbox = eachLocationBoxOverlay.parentElement.querySelector(
+                '.home_filter_checkbox-region'
+              );
+              if (
+                categoryCheckboxName ===
+                actualCheckbox.querySelector('.home_filters_checkbox-label').innerHTML
+              ) {
+                actualCheckbox.classList.toggle('fs-cmsfilter_active');
+              }
+            });
+
+            const locationCheckboxes = locationCheckboxesWrap?.querySelectorAll(
+              '.home_filters_checkbox-field'
+            );
+
+            locationCheckboxes.forEach((eachLocation, index) => {
+              if (eachLocation.classList.contains('fs-cmsfilter_active')) {
+                console.log('checkbox active');
+                setTimeout(() => {
+                  eachLocation.click();
+                }, 100 * index);
+              }
+            });
+          }
+        }
+      }
+    });
+  });
+
+  // });
 };
