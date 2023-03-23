@@ -50,11 +50,6 @@ window.fsAttributes.push([
 
     // Sync the CMSFilters instance with the new created filters
     filtersInstance.storeFiltersData();
-
-    // listInstance.on('renderitems', (renderedItems) => {
-    //   console.log('rendered');
-    //   addEventListeners();
-    // });
   },
 ]);
 
