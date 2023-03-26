@@ -335,6 +335,7 @@ const moveFields = () => {
     scrollPosition = $(window).scrollTop();
   }, 500);
 
+  // Seeting scroll Position on checing any filter
   document.addEventListener('click', function (e) {
     if (e.target.type === 'checkbox') {
       $(window).scrollTop(scrollPosition);
@@ -494,19 +495,6 @@ const moveFields = () => {
       // Click on the actual category checkbox
       categoryCheckbox.click();
 
-      // Remove/Add active class from matching location box
-      locationBoxes.forEach((eachLocationBoxOverlay) => {
-        const actualCheckbox = eachLocationBoxOverlay.parentElement.querySelector(
-          '.home_filter_checkbox-region'
-        );
-        if (
-          categoryCheckboxName ===
-          actualCheckbox.querySelector('.home_filters_checkbox-label').innerHTML
-        ) {
-          actualCheckbox.classList.toggle('fs-cmsfilter_active');
-        }
-      });
-
       const childCheckboxes = categoryCheckbox.parentElement.parentElement
         .querySelector('.home_filters_location-wrap')
         .querySelectorAll('.home_filters_checkbox-field');
@@ -522,11 +510,41 @@ const moveFields = () => {
 
         // Remove Duplicate tag templates
         removeDuplicateTags();
+
+        // Add active class from matching location box
+        locationBoxes.forEach((eachLocationBoxOverlay) => {
+          const actualCheckbox = eachLocationBoxOverlay.parentElement.querySelector(
+            '.home_filter_checkbox-region'
+          );
+          if (
+            categoryCheckboxName ===
+            actualCheckbox.querySelector('.home_filters_checkbox-label').innerHTML
+          ) {
+            if (!actualCheckbox.classList.contains('fs-cmsfilter_active')) {
+              actualCheckbox.classList.add('fs-cmsfilter_active');
+            }
+          }
+        });
       } else {
         // Uncheck all child checkboxes if category was unchecked
         childCheckboxes.forEach((eachChildCheckbox) => {
           if (eachChildCheckbox.classList.contains('fs-cmsfilter_active')) {
             eachChildCheckbox.click();
+          }
+        });
+
+        // Add active class from matching location box
+        locationBoxes.forEach((eachLocationBoxOverlay) => {
+          const actualCheckbox = eachLocationBoxOverlay.parentElement.querySelector(
+            '.home_filter_checkbox-region'
+          );
+          if (
+            categoryCheckboxName ===
+            actualCheckbox.querySelector('.home_filters_checkbox-label').innerHTML
+          ) {
+            if (actualCheckbox.classList.contains('fs-cmsfilter_active')) {
+              actualCheckbox.classList.remove('fs-cmsfilter_active');
+            }
           }
         });
       }
@@ -632,6 +650,7 @@ const moveFields = () => {
             }, 50);
           }
 
+          // If a field category was unchecked
           if (locationCheckboxesWrap) {
             // Remove active class from location
             const categoryCheckboxName = e.target
@@ -648,7 +667,7 @@ const moveFields = () => {
                 categoryCheckboxName ===
                 actualCheckbox.querySelector('.home_filters_checkbox-label').innerHTML
               ) {
-                actualCheckbox.classList.toggle('fs-cmsfilter_active');
+                actualCheckbox.classList.remove('fs-cmsfilter_active');
               }
             });
 
