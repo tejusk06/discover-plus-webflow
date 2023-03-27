@@ -27,9 +27,12 @@ window.fsAttributes.push([
     // Remove existing items
     listInstance.clearItems();
 
+    // Get the current liked opportunties by the user
+    const likedOpportunities = localStorage.getItem('likedOpportunities');
+
     // Create the new items
     const newOpportunities = opportunities.map((eachOpp) =>
-      createItem(eachOpp, oppTemplateElement)
+      createItem(eachOpp, oppTemplateElement, likedOpportunities)
     );
 
     // Populate the list
@@ -70,24 +73,98 @@ const fetchOpportunities = async () => {
 };
 
 /**
+ * Like opportunities on airtable
+ * @returns
+ */
+
+const likeOpportunityUpdate = async (airtableId, likedIcon) => {
+  // Function to make the API call
+  const updateOpportunityOnAirtable = (updatedLikedOpportunitiesArray) => {
+    const userAirtableId = localStorage.getItem('airtableId');
+    var myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    var raw = JSON.stringify({
+      event: 'liked.updated',
+      id: userAirtableId,
+      payload: updatedLikedOpportunitiesArray,
+    });
+
+    var requestOptions = {
+      method: 'PUT',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow',
+    };
+
+    // fetch(`https://discover-plus-server.herokuapp.com/api/v1/user/11`, requestOptions)
+    fetch(`http://localhost:3000/api/v1/user/11`, requestOptions)
+      .then((response) => response.text())
+      .then((result) => {
+        return;
+      })
+      .catch((error) => console.log('error', error));
+  };
+
+  // Get the current liked opportunties by the user
+  const likedOpportunities = localStorage.getItem('likedOpportunities');
+  let updatedLikedOpportunitiesArray = [];
+  let likedOpportunitiesArray = [];
+
+  if (likedOpportunities.includes(airtableId)) {
+    // If unliking an opportunity
+    likedIcon.style.color = '#9b9b9b';
+    likedOpportunitiesArray = likedOpportunities.split(',');
+    updatedLikedOpportunitiesArray = likedOpportunitiesArray.filter((eachLikedOpportunitity) => {
+      if (eachLikedOpportunitity === airtableId) {
+        return false;
+      }
+      return true;
+    });
+
+    if (updatedLikedOpportunitiesArray.length === 0) {
+      localStorage.setItem('likedOpportunities', 'undefined');
+    } else {
+      localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
+    }
+    updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
+  } else {
+    // If liking an opportunity
+    likedIcon.style.color = '#E12122';
+    if (likedOpportunities === 'undefined') {
+      updatedLikedOpportunitiesArray = [airtableId];
+      localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
+      updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
+    } else {
+      updatedLikedOpportunitiesArray = likedOpportunities.split(',');
+      updatedLikedOpportunitiesArray.push(airtableId);
+      localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
+      updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
+    }
+  }
+};
+
+/**
  * Creates an item from the template element.
  * @param opportunity The opportunity data to create the item from.
  * @param templateElement The template element.
  *
  * @returns A new Collection Item element.
  */
-const createItem = (eachOpp, templateElement) => {
+
+const createItem = (eachOpp, templateElement, likedOpportunities) => {
   // Clone the template element
   const newItem = templateElement.cloneNode(true);
 
   // Query inner elements
   const itemWrap = newItem.querySelector('[discover-element="item-wrap"]');
+  const likeWrap = newItem.querySelector('[discover-element="like-wrap"]');
   const image = newItem.querySelector('[discover-element="item-image"]');
   const fieldCategory = newItem.querySelector('[discover-element="item-field-category"]');
   const name = newItem.querySelector('[discover-element="item-name"]');
   const locationType = newItem.querySelector('[discover-element="location-type"]');
   const amountValues = newItem.querySelector('[discover-element="amount-values"]');
   const gradeValues = newItem.querySelector('[discover-element="grade-values"]');
+  const airtableIdValue = newItem.querySelector('[discover-element="airtable-id"]');
 
   // CMS filters values start here
   const typeFilter = newItem.querySelector('[fs-cmsfilter-field="type"]');
@@ -103,185 +180,214 @@ const createItem = (eachOpp, templateElement) => {
   const costFilter = newItem.querySelector('[fs-cmsfilter-field="cost"]');
   const financialAidFilter = newItem.querySelector('[fs-cmsfilter-field="financial-aid"]');
 
-  // const image = newItem.querySelector('[data-element="image"]');
-  // const category = newItem.querySelector('[data-element="category"]');
-  // const description = newItem.querySelector('[data-element="description"]');
-
   // Populate inner elements
-  // Setting the URL for the template page
-  itemWrap.href = `opportunity/${eachOpp.slug}`;
+  const populateFields = () => {
+    // Setting the URL for the template page
+    itemWrap.href = `opportunity/${eachOpp.slug}`;
 
-  itemWrap.addEventListener('click', (e) => {
-    e.preventDefault();
-    localStorage.setItem('queryParam', `${window.location.search}`);
-    window.location.href = itemWrap.href;
-  });
+    // Make the heart icon red if the opprtunity is liked
+    if (likedOpportunities) {
+      if (likedOpportunities.includes(eachOpp.airtableId)) {
+        likeWrap.querySelector('[discover-element="liked-icon"]').style.color = '#E12122';
+      }
+    } else if (!likedOpportunities) {
+      setTimeout(() => {
+        // First time user logs in the likedOpportunites have not yet been filled, so check after 2 seconds again
+        const likedOpportunities = localStorage.getItem('likedOpportunities');
+        if (likedOpportunities?.includes(eachOpp.airtableId)) {
+          likeWrap.querySelector('[discover-element="liked-icon"]').style.color = '#E12122';
+        }
+      }, 2000);
+    }
 
-  if (image && eachOpp.organizationImageUrl) {
-    image.src = eachOpp.organizationImageUrl;
-    image.classList.remove('w-dyn-bind-empty');
-    image.parentElement.classList.remove('w-condition-invisible');
-  }
-  if (name) {
-    name.textContent = eachOpp.name;
-  }
-  if (fieldCategory && eachOpp.fieldCategories) {
-    eachOpp.fieldCategories
-      .split(', ')
-      .sort()
-      .forEach((eachFieldCategory) => {
-        const newFieldCategory = fieldCategory.cloneNode(true);
+    itemWrap.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.setItem('queryParam', `${window.location.search}`);
+      window.location.href = itemWrap.href;
+    });
+
+    if (image && eachOpp.organizationImageUrl) {
+      image.src = eachOpp.organizationImageUrl;
+      image.classList.remove('w-dyn-bind-empty');
+      image.parentElement.classList.remove('w-condition-invisible');
+    }
+    if (name) {
+      name.textContent = eachOpp.name;
+    }
+    if (fieldCategory && eachOpp.fieldCategories) {
+      eachOpp.fieldCategories
+        .split(', ')
+        .sort()
+        .forEach((eachFieldCategory) => {
+          const newFieldCategory = fieldCategory.cloneNode(true);
+          newFieldCategory.textContent = eachFieldCategory.trim();
+
+          fieldCategory.parentElement.append(newFieldCategory);
+        });
+      // Hide the type template
+      fieldCategory.style.display = 'none';
+    } else if (fieldCategory) {
+      fieldCategory.parentElement.style.display = 'none';
+    }
+
+    if (locationType && eachOpp.remoteInperson) {
+      locationType.textContent = eachOpp.remoteInperson;
+    } else if (locationType) {
+      locationType.parentElement.style.display = 'none';
+    }
+    if (amountValues && eachOpp.amount) {
+      amountValues.textContent = eachOpp.amount;
+    } else if (amountValues) {
+      amountValues.parentElement.style.display = 'none';
+    }
+
+    if (gradeValues && eachOpp.gradeLevelValues) {
+      gradeValues.textContent = eachOpp.gradeLevelValues;
+    } else if (gradeValues) {
+      gradeValues.parentElement.style.display = 'none';
+    }
+
+    if (typeFilter && eachOpp.types) {
+      eachOpp.types.forEach((eachType) => {
+        const newType = typeFilter.cloneNode(true);
+        newType.textContent = eachType;
+
+        typeFilter.parentElement.append(newType);
+      });
+      typeFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (fieldCategoryFilter && eachOpp.fieldCategories) {
+      eachOpp.fieldCategories.split(',').forEach((eachFieldCategory) => {
+        const newFieldCategory = fieldCategoryFilter.cloneNode(true);
         newFieldCategory.textContent = eachFieldCategory.trim();
 
-        fieldCategory.parentElement.append(newFieldCategory);
+        fieldCategoryFilter.parentElement.append(newFieldCategory);
       });
-    // Hide the type template
-    fieldCategory.style.display = 'none';
-  } else if (fieldCategory) {
-    fieldCategory.parentElement.style.display = 'none';
-  }
-
-  if (locationType && eachOpp.remoteInperson) {
-    locationType.textContent = eachOpp.remoteInperson;
-  } else if (locationType) {
-    locationType.parentElement.style.display = 'none';
-  }
-  if (amountValues && eachOpp.amount) {
-    amountValues.textContent = eachOpp.amount;
-  } else if (amountValues) {
-    amountValues.parentElement.style.display = 'none';
-  }
-
-  if (gradeValues && eachOpp.gradeLevelValues) {
-    gradeValues.textContent = eachOpp.gradeLevelValues;
-  } else if (gradeValues) {
-    gradeValues.parentElement.style.display = 'none';
-  }
-
-  if (typeFilter && eachOpp.types) {
-    eachOpp.types.forEach((eachType) => {
-      const newType = typeFilter.cloneNode(true);
-      newType.textContent = eachType;
-
-      typeFilter.parentElement.append(newType);
-    });
-    typeFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (fieldCategoryFilter && eachOpp.fieldCategories) {
-    eachOpp.fieldCategories.split(',').forEach((eachFieldCategory) => {
-      const newFieldCategory = fieldCategoryFilter.cloneNode(true);
-      newFieldCategory.textContent = eachFieldCategory.trim();
-
-      fieldCategoryFilter.parentElement.append(newFieldCategory);
-    });
-    fieldCategoryFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (fieldFilter && eachOpp.fields) {
-    eachOpp.fields.forEach((eachField) => {
-      const newField = fieldFilter.cloneNode(true);
-      newField.textContent = eachField;
-      fieldFilter.parentElement.append(newField);
-    });
-
-    fieldFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (ageFilter && eachOpp.ageValues) {
-    eachOpp.ageValues.split(',').forEach((eachAge) => {
-      const newAge = ageFilter.cloneNode(true);
-      newAge.textContent = eachAge.trim();
-      ageFilter.parentElement.append(newAge);
-    });
-    ageFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (gradeFilter && eachOpp.gradeLevelValues) {
-    eachOpp.gradeLevelValues.split(',').forEach((eachGrade) => {
-      const newGrade = gradeFilter.cloneNode(true);
-
-      newGrade.textContent = eachGrade.trim();
-
-      gradeFilter.parentElement.append(newGrade);
-    });
-    gradeFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (timetableFilter && eachOpp.timetable) {
-    eachOpp.timetable.split(',').forEach((eachTimetable) => {
-      const newTimetable = timetableFilter.cloneNode(true);
-      newTimetable.textContent = eachTimetable.trim();
-      timetableFilter.parentElement.append(newTimetable);
-    });
-    timetableFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (locationTypeFilter && eachOpp.remoteInperson) {
-    if (eachOpp.remoteInperson === 'Remote & In-person') {
-      const newLocationType = locationTypeFilter.cloneNode(true);
-      newLocationType.textContent = 'Remote';
-      locationTypeFilter.parentElement.append(newLocationType);
-      locationTypeFilter.textContent = 'In-person';
-    } else {
-      locationTypeFilter.textContent = eachOpp.remoteInperson;
+      fieldCategoryFilter.removeAttribute('fs-cmsfilter-field');
     }
-    // locationTypeFilter.removeAttribute('fs-cmsfilter-field');
-  }
 
-  if (locationCategoryFilter && eachOpp.locationCategory) {
-    eachOpp.locationCategory.forEach((eachLocationCategory) => {
-      const newLocationCategory = locationCategoryFilter.cloneNode(true);
-      newLocationCategory.textContent = eachLocationCategory;
-      locationCategoryFilter.parentElement.append(newLocationCategory);
+    if (fieldFilter && eachOpp.fields) {
+      eachOpp.fields.forEach((eachField) => {
+        const newField = fieldFilter.cloneNode(true);
+        newField.textContent = eachField;
+        fieldFilter.parentElement.append(newField);
+      });
+
+      fieldFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (ageFilter && eachOpp.ageValues) {
+      eachOpp.ageValues.split(',').forEach((eachAge) => {
+        const newAge = ageFilter.cloneNode(true);
+        newAge.textContent = eachAge.trim();
+        ageFilter.parentElement.append(newAge);
+      });
+      ageFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (gradeFilter && eachOpp.gradeLevelValues) {
+      eachOpp.gradeLevelValues.split(',').forEach((eachGrade) => {
+        const newGrade = gradeFilter.cloneNode(true);
+
+        newGrade.textContent = eachGrade.trim();
+
+        gradeFilter.parentElement.append(newGrade);
+      });
+      gradeFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (timetableFilter && eachOpp.timetable) {
+      eachOpp.timetable.split(',').forEach((eachTimetable) => {
+        const newTimetable = timetableFilter.cloneNode(true);
+        newTimetable.textContent = eachTimetable.trim();
+        timetableFilter.parentElement.append(newTimetable);
+      });
+      timetableFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (locationTypeFilter && eachOpp.remoteInperson) {
+      if (eachOpp.remoteInperson === 'Remote & In-person') {
+        const newLocationType = locationTypeFilter.cloneNode(true);
+        newLocationType.textContent = 'Remote';
+        locationTypeFilter.parentElement.append(newLocationType);
+        locationTypeFilter.textContent = 'In-person';
+      } else {
+        locationTypeFilter.textContent = eachOpp.remoteInperson;
+      }
+      // locationTypeFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (locationCategoryFilter && eachOpp.locationCategory) {
+      eachOpp.locationCategory.forEach((eachLocationCategory) => {
+        const newLocationCategory = locationCategoryFilter.cloneNode(true);
+        newLocationCategory.textContent = eachLocationCategory;
+        locationCategoryFilter.parentElement.append(newLocationCategory);
+      });
+      locationCategoryFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (locationFilter && eachOpp.location) {
+      eachOpp.location.split(',').forEach((eachLocation) => {
+        const newLocation = locationFilter.cloneNode(true);
+        newLocation.textContent = eachLocation.trim();
+        locationFilter.parentElement.append(newLocation);
+      });
+      locationFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (deadlineFilter && eachOpp.applicationDeadline) {
+      eachOpp.applicationDeadline.split(',').forEach((eachDeadline) => {
+        const newDeadline = deadlineFilter.cloneNode(true);
+        newDeadline.textContent = eachDeadline.trim();
+        deadlineFilter.parentElement.append(newDeadline);
+      });
+      deadlineFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (costFilter && eachOpp.amount) {
+      eachOpp.amount.split(',').forEach((eachAmount) => {
+        const newAmount = costFilter.cloneNode(true);
+        newAmount.textContent = eachAmount.trim();
+        costFilter.parentElement.append(newAmount);
+      });
+    }
+
+    if (costFilter && eachOpp.cost) {
+      eachOpp.cost.split(',').forEach((eachCost) => {
+        const newCost = costFilter.cloneNode(true);
+        newCost.textContent = eachCost.trim();
+        costFilter.parentElement.append(newCost);
+      });
+
+      costFilter.removeAttribute('fs-cmsfilter-field');
+    }
+
+    if (financialAidFilter)
+      financialAidFilter.textContent = eachOpp.financialAid ? 'Financial Aid' : '';
+  };
+
+  // Adding event listener to like an opportunity
+  const likeItem = () => {
+    airtableIdValue.innerHTML = eachOpp.airtableId;
+
+    likeWrap?.addEventListener('click', () => {
+      const likedIcon = likeWrap.querySelector('[discover-element="liked-icon"]');
+      const airtableId = likeWrap.parentElement.querySelector(
+        '[discover-element="airtable-id"]'
+      ).innerHTML;
+      likeOpportunityUpdate(airtableId, likedIcon);
     });
-    locationCategoryFilter.removeAttribute('fs-cmsfilter-field');
-  }
+  };
 
-  if (locationFilter && eachOpp.location) {
-    eachOpp.location.split(',').forEach((eachLocation) => {
-      const newLocation = locationFilter.cloneNode(true);
-      newLocation.textContent = eachLocation.trim();
-      locationFilter.parentElement.append(newLocation);
-    });
-    locationFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (deadlineFilter && eachOpp.applicationDeadline) {
-    eachOpp.applicationDeadline.split(',').forEach((eachDeadline) => {
-      const newDeadline = deadlineFilter.cloneNode(true);
-      newDeadline.textContent = eachDeadline.trim();
-      deadlineFilter.parentElement.append(newDeadline);
-    });
-    deadlineFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (costFilter && eachOpp.amount) {
-    eachOpp.amount.split(',').forEach((eachAmount) => {
-      const newAmount = costFilter.cloneNode(true);
-      newAmount.textContent = eachAmount.trim();
-      costFilter.parentElement.append(newAmount);
-    });
-  }
-
-  if (costFilter && eachOpp.cost) {
-    eachOpp.cost.split(',').forEach((eachCost) => {
-      const newCost = costFilter.cloneNode(true);
-      newCost.textContent = eachCost.trim();
-      costFilter.parentElement.append(newCost);
-    });
-
-    costFilter.removeAttribute('fs-cmsfilter-field');
-  }
-
-  if (financialAidFilter)
-    financialAidFilter.textContent = eachOpp.financialAid ? 'Financial Aid' : '';
+  populateFields();
+  likeItem();
 
   return newItem;
 };
 
 /**
- * Moving the fields into their field categories
+ * Moving the fields into their field categories for filtering functionality
  */
 
 const moveFields = () => {
