@@ -238,6 +238,9 @@ Webflow.push(function () {
       form.addEventListener('submit', async function (event) {
         event.preventDefault();
 
+        document.querySelector('.profile_header_image-message').innerHTML = 'Uploading Image';
+        document.querySelector('.profile_header_image-message').style.display = 'block';
+
         const airtableId = localStorage.getItem('airtableId');
         const imageInput = document.querySelector('#image-input');
 
@@ -261,7 +264,9 @@ Webflow.push(function () {
           const jsonResponse = await response.json();
           console.log('Image uploaded successfully', jsonResponse);
           fetchAndStoreImage(jsonResponse.imageUrl);
+          document.querySelector('.profile_header_image-message').style.display = 'none';
         } else {
+          document.querySelector('.profile_header_image-message').innerHTML = 'Error';
           console.error('Error uploading image:', response.status, response.statusText);
         }
       });
