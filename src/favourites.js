@@ -52,7 +52,7 @@ const showSavedSearches = () => {
   const searchTemplate = document.querySelector('[discover-element="search-template"]');
 
   console.log({ savedSearches });
-  if (savedSearches !== 'undefined' || savedSearches !== '') {
+  if (savedSearches !== 'undefined' && savedSearches !== '') {
     const savedSearchesArray = JSON.parse(savedSearches);
 
     // Render each saved Search

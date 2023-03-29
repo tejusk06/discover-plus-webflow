@@ -156,14 +156,14 @@ const populateDateFromCms = () => {
 
       // Make the heart icon red if the opprtunity is liked
       if (likedOpportunities) {
-        if (likedOpportunities.includes(eachOpp.airtableId)) {
+        if (likedOpportunities.includes(eachOpp.airtableId) && likeWrap) {
           likeWrap.querySelector('[discover-element="liked-icon"]').style.color = '#E12122';
         }
       } else if (!likedOpportunities) {
         setTimeout(() => {
           // First time user logs in the likedOpportunites have not yet been filled, so check after 2 seconds again
           const likedOpportunities = localStorage.getItem('likedOpportunities');
-          if (likedOpportunities?.includes(eachOpp.airtableId)) {
+          if (likedOpportunities?.includes(eachOpp.airtableId) && likeWrap) {
             likeWrap.querySelector('[discover-element="liked-icon"]').style.color = '#E12122';
           }
         }, 2000);
