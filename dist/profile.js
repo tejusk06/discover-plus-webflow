@@ -1,1 +1,212 @@
-"use strict";(()=>{Webflow.push(function(){window.$memberstackDom.getCurrentMember().then(({data:m})=>{if(m){console.log("local"),console.log("local");let y=localStorage.getItem("imageFile");localStorage.getItem("imageUrl")&&y&&(document.querySelector('[discover-element="profile-image"]').src=y);let k=window.location.href,f=new URLSearchParams(new URL(k).search);if(f.has("tab")){let o=f.get("tab");document.querySelector(`[data-w-tab="${o}"]`).click()}let L=document.querySelector('[discover-element="update-password"]'),T=document.querySelector('[discover-element="submit-password"]'),g=document.querySelector(".profile_header_form-error"),E=document.querySelector('[discover-element="new-password"]'),M=document.querySelector('[discover-element="new-password2"]');L.addEventListener("click",()=>{E.value===M.value?(g.style.display="none",T.click()):g.style.display="block"});let u=localStorage.getItem("types"),c=u==null?void 0:u.split(","),p=localStorage.getItem("fields"),a=p==null?void 0:p.split(","),S=document.querySelectorAll('[discover-element="type-embed"]'),h=document.querySelectorAll('[discover-element="field-embed"]'),i=document.querySelector('[discover-element="type-template"]'),d=document.querySelector('[discover-element="field-template"]'),q=o=>{i.style.display="flex";let{parentElement:t}=i,{children:l}=t;for(let e=l.length-1;e>0;e--)t.removeChild(l[e]);S.forEach(e=>{let r=e.querySelector(".profile_header_interests-id").innerHTML;if(c!=null&&c.includes(r)){o==="localStorage"&&e.getElementsByTagName("input")[0].click();let s=e.querySelector(".profile_header_tabs-interest").innerHTML,n=i.cloneNode(!0);n.innerHTML=s,i.parentElement.append(n)}}),i.style.display="none"},b=o=>{d.style.display="flex";let{parentElement:t}=d,{children:l}=t;for(let e=l.length-1;e>0;e--)t.removeChild(l[e]);h.forEach(e=>{let r=e.querySelector(".profile_header_interests-id").innerHTML;if(a!=null&&a.includes(r)){o==="localStorage"&&e.getElementsByTagName("input")[0].click();let s=e.querySelector(".profile_header_tabs-interest").innerHTML,n=d.cloneNode(!0);n.innerHTML=s,d.parentElement.append(n)}}),d.style.display="none"};q("localStorage"),b("localStorage");let F=document.querySelector('[d-e="types-form"]'),C=document.querySelector('[d-e="fields-form"]'),H=document.querySelector('[d-e="update-types"]'),U=document.querySelector('[d-e="update-fields"]'),v=(o,t)=>{var l=new Headers;l.append("Content-Type","application/json");let e=localStorage.getItem("airtableId");var r=JSON.stringify({event:o,payload:t,id:e}),s={method:"PUT",headers:l,body:r,redirect:"follow"};fetch(`https://discover-plus-server.herokuapp.com/api/v1/user/${m.id}`,s).then(n=>n.text()).then(n=>{var _,I;o==="types.updated"?(q("api"),localStorage.setItem("types",c.join(",")),(_=document.querySelector('[discover-element="add-remove-types"]'))==null||_.click()):o==="fields.updated"&&(b("api"),localStorage.setItem("fields",a.join(",")),(I=document.querySelector('[discover-element="add-remove-fields"]'))==null||I.click()),console.log(n)}).catch(n=>console.log("error",n))};H.addEventListener("click",o=>{c=[],S.forEach(t=>{let l=t.querySelector(".profile_header_interests-id").innerHTML,e=t.querySelector('[d-e="checkbox"]'),r=!1;e.classList.contains("w--redirected-checked")&&(r=!0,c.push(l))}),v("types.updated",c)}),U.addEventListener("click",o=>{a=[],h.forEach(t=>{let l=t.querySelector(".profile_header_interests-id").innerHTML,e=t.querySelector('[d-e="checkbox"]'),r=!1;e.classList.contains("w--redirected-checked")&&(r=!0,a.push(l))}),v("fields.updated",a)});let w=document.getElementById("image-form");document.querySelector("#image-input").addEventListener("change",o=>{if(o.target.files[0].size>1*1024*1024){console.error("File size exceeds 1MB limit"),document.querySelector(".profile_header_image-message").innerHTML="File size sould be less than 1mb",document.querySelector(".profile_header_image-message").style.display="block";return}document.querySelector(".profile_header_image-message").style.display="none",document.querySelector("#profile_header_image-button").style.display="block"});let R=async o=>{try{let l=await(await fetch(o)).blob(),e=new FileReader;e.onloadend=function(){let r=e.result;localStorage.setItem("imageFile",r),localStorage.setItem("imageUrl",o),document.querySelector('[discover-element="navbar-image"]').src=r,document.querySelector('[discover-element="profile-image"]').src=r},e.readAsDataURL(l)}catch(t){console.error("Error fetching and storing image:",t)}};w.addEventListener("submit",async function(o){o.preventDefault(),document.querySelector(".profile_header_image-message").innerHTML="Uploading Image",document.querySelector(".profile_header_image-message").style.display="block";let t=localStorage.getItem("airtableId");if(document.querySelector("#image-input").files[0].size>1*1024*1024){console.error("File size exceeds 1MB limit");return}let e=new FormData(w);e.append("id",`${t}`);let r=await fetch(`https://discover-plus-server.herokuapp.com/api/v1/user/${m.id}`,{method:"PUT",body:e,event:"image.updated"});if(r.ok){let s=await r.json();console.log("Image uploaded successfully",s),R(s.imageUrl),document.querySelector(".profile_header_image-message").style.display="none"}else document.querySelector(".profile_header_image-message").innerHTML="Error",console.error("Error uploading image:",r.status,r.statusText)})}})});})();
+"use strict";
+(() => {
+  // bin/live-reload.js
+  new EventSource(`${"http://localhost:3001"}/esbuild`).addEventListener("change", () => location.reload());
+
+  // src/profile.js
+  Webflow.push(function() {
+    const memberstack = window.$memberstackDom;
+    memberstack.getCurrentMember().then(({ data: member }) => {
+      if (member) {
+        console.log("local");
+        console.log("local");
+        const localImageFile = localStorage.getItem("imageFile");
+        const localImageURL = localStorage.getItem("imageUrl");
+        if (localImageURL && localImageFile) {
+          document.querySelector('[discover-element="profile-image"]').src = localImageFile;
+        }
+        const currentUrl = window.location.href;
+        const urlParams = new URLSearchParams(new URL(currentUrl).search);
+        if (urlParams.has("tab")) {
+          const tabValue = urlParams.get("tab");
+          document.querySelector(`[data-w-tab="${tabValue}"]`).click();
+        }
+        const updateButton = document.querySelector('[discover-element="update-password"]');
+        const submitButton = document.querySelector('[discover-element="submit-password"]');
+        const passwordError = document.querySelector(".profile_header_form-error");
+        const passwordInput = document.querySelector('[discover-element="new-password"]');
+        const passwordInput2 = document.querySelector('[discover-element="new-password2"]');
+        updateButton.addEventListener("click", () => {
+          if (passwordInput.value === passwordInput2.value) {
+            passwordError.style.display = "none";
+            submitButton.click();
+          } else {
+            passwordError.style.display = "block";
+          }
+        });
+        const userTypes = localStorage.getItem("types");
+        let typesArray = userTypes?.split(",");
+        const userFields = localStorage.getItem("fields");
+        let fieldsArray = userFields?.split(",");
+        const allTypes = document.querySelectorAll('[discover-element="type-embed"]');
+        const allFields = document.querySelectorAll('[discover-element="field-embed"]');
+        const typeTemplate = document.querySelector('[discover-element="type-template"]');
+        const fieldTemplate = document.querySelector('[discover-element="field-template"]');
+        const updateTypesOnPage = (source) => {
+          typeTemplate.style.display = "flex";
+          const { parentElement } = typeTemplate;
+          const { children } = parentElement;
+          for (let i = children.length - 1; i > 0; i--) {
+            parentElement.removeChild(children[i]);
+          }
+          allTypes.forEach((eachType) => {
+            const typeRecord = eachType.querySelector(".profile_header_interests-id").innerHTML;
+            if (typesArray?.includes(typeRecord)) {
+              if (source === "localStorage") {
+                eachType.getElementsByTagName("input")[0].click();
+              }
+              const typeText = eachType.querySelector(".profile_header_tabs-interest").innerHTML;
+              const newTypeTemplate = typeTemplate.cloneNode(true);
+              newTypeTemplate.innerHTML = typeText;
+              typeTemplate.parentElement.append(newTypeTemplate);
+            }
+          });
+          typeTemplate.style.display = "none";
+        };
+        const updateFieldsOnPage = (source) => {
+          fieldTemplate.style.display = "flex";
+          const { parentElement } = fieldTemplate;
+          const { children } = parentElement;
+          for (let i = children.length - 1; i > 0; i--) {
+            parentElement.removeChild(children[i]);
+          }
+          allFields.forEach((eachField) => {
+            const fieldRecord = eachField.querySelector(".profile_header_interests-id").innerHTML;
+            if (fieldsArray?.includes(fieldRecord)) {
+              if (source === "localStorage") {
+                eachField.getElementsByTagName("input")[0].click();
+              }
+              const fieldText = eachField.querySelector(".profile_header_tabs-interest").innerHTML;
+              const newFieldTemplate = fieldTemplate.cloneNode(true);
+              newFieldTemplate.innerHTML = fieldText;
+              fieldTemplate.parentElement.append(newFieldTemplate);
+            }
+          });
+          fieldTemplate.style.display = "none";
+        };
+        updateTypesOnPage("localStorage");
+        updateFieldsOnPage("localStorage");
+        const fieldsForm = document.querySelector('[d-e="types-form"]');
+        const typesForm = document.querySelector('[d-e="fields-form"]');
+        const typesButton = document.querySelector('[d-e="update-types"]');
+        const fieldsButton = document.querySelector('[d-e="update-fields"]');
+        const updateUserInAirtable = (event, payload) => {
+          var myHeaders = new Headers();
+          myHeaders.append("Content-Type", "application/json");
+          const airtableId = localStorage.getItem("airtableId");
+          var raw = JSON.stringify({
+            event,
+            payload,
+            id: airtableId
+          });
+          var requestOptions = {
+            method: "PUT",
+            headers: myHeaders,
+            body: raw,
+            redirect: "follow"
+          };
+          fetch(`https://discover-plus-server.herokuapp.com/api/v1/user/${member.id}`, requestOptions).then((response) => response.text()).then((result) => {
+            if (event === "types.updated") {
+              updateTypesOnPage("api");
+              localStorage.setItem("types", typesArray.join(","));
+              document.querySelector('[discover-element="add-remove-types"]')?.click();
+            } else if (event === "fields.updated") {
+              updateFieldsOnPage("api");
+              localStorage.setItem("fields", fieldsArray.join(","));
+              document.querySelector('[discover-element="add-remove-fields"]')?.click();
+            }
+            console.log(result);
+          }).catch((error) => console.log("error", error));
+        };
+        typesButton.addEventListener("click", (e) => {
+          typesArray = [];
+          allTypes.forEach((eachType) => {
+            const typeRecord = eachType.querySelector(".profile_header_interests-id").innerHTML;
+            const typeCheck = eachType.querySelector('[d-e="checkbox"]');
+            let typeChecked = false;
+            if (typeCheck.classList.contains("w--redirected-checked")) {
+              typeChecked = true;
+              typesArray.push(typeRecord);
+            }
+          });
+          updateUserInAirtable("types.updated", typesArray);
+        });
+        fieldsButton.addEventListener("click", (e) => {
+          fieldsArray = [];
+          allFields.forEach((eachField) => {
+            const fieldRecord = eachField.querySelector(".profile_header_interests-id").innerHTML;
+            const fieldCheck = eachField.querySelector('[d-e="checkbox"]');
+            let fieldChecked = false;
+            if (fieldCheck.classList.contains("w--redirected-checked")) {
+              fieldChecked = true;
+              fieldsArray.push(fieldRecord);
+            }
+          });
+          updateUserInAirtable("fields.updated", fieldsArray);
+        });
+        const form = document.getElementById("image-form");
+        const imageInput = document.querySelector("#image-input");
+        imageInput.addEventListener("change", (event) => {
+          const file = event.target.files[0];
+          if (file.size > 1 * 1024 * 1024) {
+            console.error("File size exceeds 1MB limit");
+            document.querySelector(".profile_header_image-message").innerHTML = "File size sould be less than 1mb";
+            document.querySelector(".profile_header_image-message").style.display = "block";
+            return;
+          }
+          document.querySelector(".profile_header_image-message").style.display = "none";
+          document.querySelector("#profile_header_image-button").style.display = "block";
+        });
+        const fetchAndStoreImage = async (url) => {
+          try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onloadend = function() {
+              const base64data = reader.result;
+              localStorage.setItem("imageFile", base64data);
+              localStorage.setItem("imageUrl", url);
+              document.querySelector('[discover-element="navbar-image"]').src = base64data;
+              document.querySelector('[discover-element="profile-image"]').src = base64data;
+            };
+            reader.readAsDataURL(blob);
+          } catch (error) {
+            console.error("Error fetching and storing image:", error);
+          }
+        };
+        form.addEventListener("submit", async function(event) {
+          event.preventDefault();
+          document.querySelector(".profile_header_image-message").innerHTML = "Uploading Image";
+          document.querySelector(".profile_header_image-message").style.display = "block";
+          const airtableId = localStorage.getItem("airtableId");
+          const imageInput2 = document.querySelector("#image-input");
+          if (imageInput2.files[0].size > 1 * 1024 * 1024) {
+            console.error("File size exceeds 1MB limit");
+            return;
+          }
+          const formData = new FormData(form);
+          formData.append("id", `${airtableId}`);
+          const response = await fetch(
+            `https://discover-plus-server.herokuapp.com/api/v1/user/${member.id}`,
+            {
+              method: "PUT",
+              body: formData,
+              event: "image.updated"
+            }
+          );
+          if (response.ok) {
+            const jsonResponse = await response.json();
+            console.log("Image uploaded successfully", jsonResponse);
+            fetchAndStoreImage(jsonResponse.imageUrl);
+            document.querySelector(".profile_header_image-message").style.display = "none";
+          } else {
+            document.querySelector(".profile_header_image-message").innerHTML = "Error";
+            console.error("Error uploading image:", response.status, response.statusText);
+          }
+        });
+      } else {
+      }
+    });
+  });
+})();
+//# sourceMappingURL=profile.js.map

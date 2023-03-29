@@ -1,395 +1,362 @@
 // import type { CMSFilters } from '../../types/CMSFilters';
 // import type { Product } from './types';
-
 import { doc } from 'prettier';
 
-/**
- * Populate CMS Data from an external API.
- */
-window.fsAttributes = window.fsAttributes || [];
-window.fsAttributes.push([
-  'cmsfilter',
-  async (filtersInstances) => {
-    // Get the filters instance
-    const [filtersInstance] = filtersInstances;
+import fetchOpportunities from './utils/fetchOpportunities';
+import updateSearchesOnAirtable from './utils/updateSearchesOnAirtable';
 
-    // Get the list instance
-    const { listInstance } = filtersInstance;
+//  Populate CMS Data from an external API.
+const populateDateFromCms = () => {
+  window.fsAttributes = window.fsAttributes || [];
+  window.fsAttributes.push([
+    'cmsfilter',
+    async (filtersInstances) => {
+      // Get the filters instance
+      const [filtersInstance] = filtersInstances;
 
-    // Save a copy of the template
-    const [firstItem] = listInstance.items;
-    const oppTemplateElement = firstItem.element;
+      // Get the list instance
+      const { listInstance } = filtersInstance;
 
-    // Fetch external data
-    const opportunities = await fetchOpportunities();
-    // console.log('opportunities', opportunities);
+      // Save a copy of the template
+      const [firstItem] = listInstance.items;
+      const oppTemplateElement = firstItem.element;
 
-    // Remove existing items
-    listInstance.clearItems();
+      // Fetch external data
+      const opportunities = await fetchOpportunities();
+      // console.log('opportunities', opportunities);
+
+      // Remove existing items
+      listInstance.clearItems();
+
+      // Get the current liked opportunties by the user
+      const likedOpportunities = localStorage.getItem('likedOpportunities');
+
+      // Create the new items
+      const newOpportunities = opportunities.map((eachOpp) =>
+        createItem(eachOpp, oppTemplateElement, likedOpportunities)
+      );
+
+      // Populate the list
+      await listInstance.addItems(newOpportunities);
+
+      // Add logic to clear all tags when "Clear filters" is clicked
+      // const clearFiltersLink = document.querySelector('[discover-element="clear-filters"]');
+
+      // clearFiltersLink.addEventListener('click', () => {
+      //   const tagCloseLinks = document.querySelectorAll('[fs-cmsfilter-element="tag-remove"]');
+      //   tagCloseLinks.forEach((eachTagClose) => {
+      //     eachTagClose.click();
+      //   });
+      // });
+    },
+  ]);
+
+  //  Like opportunities on airtable
+  const likeOpportunityUpdate = async (airtableId, likedIcon) => {
+    // Function to make the API call
+    const updateOpportunityOnAirtable = (updatedLikedOpportunitiesArray) => {
+      const userAirtableId = localStorage.getItem('airtableId');
+      var myHeaders = new Headers();
+      myHeaders.append('Content-Type', 'application/json');
+      var raw = JSON.stringify({
+        event: 'liked.updated',
+        id: userAirtableId,
+        payload: updatedLikedOpportunitiesArray,
+      });
+
+      var requestOptions = {
+        method: 'PUT',
+        headers: myHeaders,
+        body: raw,
+        redirect: 'follow',
+      };
+
+      fetch(`https://discover-plus-server.herokuapp.com/api/v1/user/11`, requestOptions)
+        .then((response) => response.text())
+        .then((result) => {
+          return;
+        })
+        .catch((error) => console.log('error', error));
+    };
 
     // Get the current liked opportunties by the user
     const likedOpportunities = localStorage.getItem('likedOpportunities');
+    let updatedLikedOpportunitiesArray = [];
+    let likedOpportunitiesArray = [];
 
-    // Create the new items
-    const newOpportunities = opportunities.map((eachOpp) =>
-      createItem(eachOpp, oppTemplateElement, likedOpportunities)
-    );
-
-    // Populate the list
-    await listInstance.addItems(newOpportunities);
-
-    // Move fields into their field categories
-    moveFields();
-
-    // Add logic to clear all tags when "Clear filters" is clicked
-    const clearFiltersLink = document.querySelector('[discover-element="clear-filters"]');
-
-    clearFiltersLink.addEventListener('click', () => {
-      const tagCloseLinks = document.querySelectorAll('[fs-cmsfilter-element="tag-remove"]');
-      tagCloseLinks.forEach((eachTagClose) => {
-        eachTagClose.click();
+    if (likedOpportunities.includes(airtableId)) {
+      // If unliking an opportunity
+      likedIcon.style.color = '#9b9b9b';
+      likedOpportunitiesArray = likedOpportunities.split(',');
+      updatedLikedOpportunitiesArray = likedOpportunitiesArray.filter((eachLikedOpportunitity) => {
+        if (eachLikedOpportunitity === airtableId) {
+          return false;
+        }
+        return true;
       });
-    });
 
-    // Sync the CMSFilters instance with the new created filters
-    filtersInstance.storeFiltersData();
-  },
-]);
-
-/**
- * Fetches opportunities from airtable
- * @returns An array of {@link opportunities}.
- */
-
-const fetchOpportunities = async () => {
-  try {
-    const response = await fetch('https://discover-plus-server.herokuapp.com/api/v1/opportunities');
-    const data = await response.json();
-    return data.allOpportunities;
-  } catch (error) {
-    console.log(error);
-    return [];
-  }
-};
-
-/**
- * Like opportunities on airtable
- * @returns
- */
-
-const likeOpportunityUpdate = async (airtableId, likedIcon) => {
-  // Function to make the API call
-  const updateOpportunityOnAirtable = (updatedLikedOpportunitiesArray) => {
-    const userAirtableId = localStorage.getItem('airtableId');
-    var myHeaders = new Headers();
-    myHeaders.append('Content-Type', 'application/json');
-    var raw = JSON.stringify({
-      event: 'liked.updated',
-      id: userAirtableId,
-      payload: updatedLikedOpportunitiesArray,
-    });
-
-    var requestOptions = {
-      method: 'PUT',
-      headers: myHeaders,
-      body: raw,
-      redirect: 'follow',
-    };
-
-    // fetch(`https://discover-plus-server.herokuapp.com/api/v1/user/11`, requestOptions)
-    fetch(`http://localhost:3000/api/v1/user/11`, requestOptions)
-      .then((response) => response.text())
-      .then((result) => {
-        return;
-      })
-      .catch((error) => console.log('error', error));
+      if (updatedLikedOpportunitiesArray.length === 0) {
+        localStorage.setItem('likedOpportunities', 'undefined');
+      } else {
+        localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
+      }
+      updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
+    } else {
+      // If liking an opportunity
+      likedIcon.style.color = '#E12122';
+      if (likedOpportunities === 'undefined') {
+        updatedLikedOpportunitiesArray = [airtableId];
+        localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
+        updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
+      } else {
+        updatedLikedOpportunitiesArray = likedOpportunities.split(',');
+        updatedLikedOpportunitiesArray.push(airtableId);
+        localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
+        updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
+      }
+    }
   };
 
-  // Get the current liked opportunties by the user
-  const likedOpportunities = localStorage.getItem('likedOpportunities');
-  let updatedLikedOpportunitiesArray = [];
-  let likedOpportunitiesArray = [];
+  // @returns A new Collection Item element.
+  const createItem = (eachOpp, templateElement, likedOpportunities) => {
+    // Clone the template element
+    const newItem = templateElement.cloneNode(true);
 
-  if (likedOpportunities.includes(airtableId)) {
-    // If unliking an opportunity
-    likedIcon.style.color = '#9b9b9b';
-    likedOpportunitiesArray = likedOpportunities.split(',');
-    updatedLikedOpportunitiesArray = likedOpportunitiesArray.filter((eachLikedOpportunitity) => {
-      if (eachLikedOpportunitity === airtableId) {
-        return false;
-      }
-      return true;
-    });
+    // Query inner elements
+    const itemWrap = newItem.querySelector('[discover-element="item-wrap"]');
+    const likeWrap = newItem.querySelector('[discover-element="like-wrap"]');
+    const image = newItem.querySelector('[discover-element="item-image"]');
+    const fieldCategory = newItem.querySelector('[discover-element="item-field-category"]');
+    const name = newItem.querySelector('[discover-element="item-name"]');
+    const locationType = newItem.querySelector('[discover-element="location-type"]');
+    const amountValues = newItem.querySelector('[discover-element="amount-values"]');
+    const gradeValues = newItem.querySelector('[discover-element="grade-values"]');
+    const airtableIdValue = newItem.querySelector('[discover-element="airtable-id"]');
 
-    if (updatedLikedOpportunitiesArray.length === 0) {
-      localStorage.setItem('likedOpportunities', 'undefined');
-    } else {
-      localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
-    }
-    updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
-  } else {
-    // If liking an opportunity
-    likedIcon.style.color = '#E12122';
-    if (likedOpportunities === 'undefined') {
-      updatedLikedOpportunitiesArray = [airtableId];
-      localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
-      updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
-    } else {
-      updatedLikedOpportunitiesArray = likedOpportunities.split(',');
-      updatedLikedOpportunitiesArray.push(airtableId);
-      localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
-      updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
-    }
-  }
-};
+    // CMS filters values start here
+    const typeFilter = newItem.querySelector('[fs-cmsfilter-field="type"]');
+    const fieldCategoryFilter = newItem.querySelector('[fs-cmsfilter-field="field-category"]');
+    const fieldFilter = newItem.querySelector('[fs-cmsfilter-field="field"]');
+    const ageFilter = newItem.querySelector('[fs-cmsfilter-field="age"]');
+    const gradeFilter = newItem.querySelector('[fs-cmsfilter-field="grade"]');
+    const timetableFilter = newItem.querySelector('[fs-cmsfilter-field="timetable"]');
+    const locationTypeFilter = newItem.querySelector('[fs-cmsfilter-field="location-type"]');
+    const locationCategoryFilter = newItem.querySelector(
+      '[fs-cmsfilter-field="location-category"]'
+    );
+    const locationFilter = newItem.querySelector('[fs-cmsfilter-field="location"]');
+    const deadlineFilter = newItem.querySelector('[fs-cmsfilter-field="deadline"]');
+    const costFilter = newItem.querySelector('[fs-cmsfilter-field="cost"]');
+    const financialAidFilter = newItem.querySelector('[fs-cmsfilter-field="financial-aid"]');
 
-/**
- * Creates an item from the template element.
- * @param opportunity The opportunity data to create the item from.
- * @param templateElement The template element.
- *
- * @returns A new Collection Item element.
- */
+    // Populate inner elements
+    const populateFields = () => {
+      // Setting the URL for the template page
+      itemWrap.href = `opportunity/${eachOpp.slug}`;
 
-const createItem = (eachOpp, templateElement, likedOpportunities) => {
-  // Clone the template element
-  const newItem = templateElement.cloneNode(true);
-
-  // Query inner elements
-  const itemWrap = newItem.querySelector('[discover-element="item-wrap"]');
-  const likeWrap = newItem.querySelector('[discover-element="like-wrap"]');
-  const image = newItem.querySelector('[discover-element="item-image"]');
-  const fieldCategory = newItem.querySelector('[discover-element="item-field-category"]');
-  const name = newItem.querySelector('[discover-element="item-name"]');
-  const locationType = newItem.querySelector('[discover-element="location-type"]');
-  const amountValues = newItem.querySelector('[discover-element="amount-values"]');
-  const gradeValues = newItem.querySelector('[discover-element="grade-values"]');
-  const airtableIdValue = newItem.querySelector('[discover-element="airtable-id"]');
-
-  // CMS filters values start here
-  const typeFilter = newItem.querySelector('[fs-cmsfilter-field="type"]');
-  const fieldCategoryFilter = newItem.querySelector('[fs-cmsfilter-field="field-category"]');
-  const fieldFilter = newItem.querySelector('[fs-cmsfilter-field="field"]');
-  const ageFilter = newItem.querySelector('[fs-cmsfilter-field="age"]');
-  const gradeFilter = newItem.querySelector('[fs-cmsfilter-field="grade"]');
-  const timetableFilter = newItem.querySelector('[fs-cmsfilter-field="timetable"]');
-  const locationTypeFilter = newItem.querySelector('[fs-cmsfilter-field="location-type"]');
-  const locationCategoryFilter = newItem.querySelector('[fs-cmsfilter-field="location-category"]');
-  const locationFilter = newItem.querySelector('[fs-cmsfilter-field="location"]');
-  const deadlineFilter = newItem.querySelector('[fs-cmsfilter-field="deadline"]');
-  const costFilter = newItem.querySelector('[fs-cmsfilter-field="cost"]');
-  const financialAidFilter = newItem.querySelector('[fs-cmsfilter-field="financial-aid"]');
-
-  // Populate inner elements
-  const populateFields = () => {
-    // Setting the URL for the template page
-    itemWrap.href = `opportunity/${eachOpp.slug}`;
-
-    // Make the heart icon red if the opprtunity is liked
-    if (likedOpportunities) {
-      if (likedOpportunities.includes(eachOpp.airtableId)) {
-        likeWrap.querySelector('[discover-element="liked-icon"]').style.color = '#E12122';
-      }
-    } else if (!likedOpportunities) {
-      setTimeout(() => {
-        // First time user logs in the likedOpportunites have not yet been filled, so check after 2 seconds again
-        const likedOpportunities = localStorage.getItem('likedOpportunities');
-        if (likedOpportunities?.includes(eachOpp.airtableId)) {
+      // Make the heart icon red if the opprtunity is liked
+      if (likedOpportunities) {
+        if (likedOpportunities.includes(eachOpp.airtableId)) {
           likeWrap.querySelector('[discover-element="liked-icon"]').style.color = '#E12122';
         }
-      }, 2000);
-    }
+      } else if (!likedOpportunities) {
+        setTimeout(() => {
+          // First time user logs in the likedOpportunites have not yet been filled, so check after 2 seconds again
+          const likedOpportunities = localStorage.getItem('likedOpportunities');
+          if (likedOpportunities?.includes(eachOpp.airtableId)) {
+            likeWrap.querySelector('[discover-element="liked-icon"]').style.color = '#E12122';
+          }
+        }, 2000);
+      }
 
-    itemWrap.addEventListener('click', (e) => {
-      e.preventDefault();
-      localStorage.setItem('queryParam', `${window.location.search}`);
-      window.location.href = itemWrap.href;
-    });
+      itemWrap.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.setItem('queryParam', `${window.location.search}`);
+        window.location.href = itemWrap.href;
+      });
 
-    if (image && eachOpp.organizationImageUrl) {
-      image.src = eachOpp.organizationImageUrl;
-      image.classList.remove('w-dyn-bind-empty');
-      image.parentElement.classList.remove('w-condition-invisible');
-    }
-    if (name) {
-      name.textContent = eachOpp.name;
-    }
-    if (fieldCategory && eachOpp.fieldCategories) {
-      eachOpp.fieldCategories
-        .split(', ')
-        .sort()
-        .forEach((eachFieldCategory) => {
-          const newFieldCategory = fieldCategory.cloneNode(true);
+      if (image && eachOpp.organizationImageUrl) {
+        image.src = eachOpp.organizationImageUrl;
+        image.classList.remove('w-dyn-bind-empty');
+        image.parentElement.classList.remove('w-condition-invisible');
+      }
+      if (name) {
+        name.textContent = eachOpp.name;
+      }
+      if (fieldCategory && eachOpp.fieldCategories) {
+        eachOpp.fieldCategories
+          .split(', ')
+          .sort()
+          .forEach((eachFieldCategory) => {
+            const newFieldCategory = fieldCategory.cloneNode(true);
+            newFieldCategory.textContent = eachFieldCategory.trim();
+
+            fieldCategory.parentElement.append(newFieldCategory);
+          });
+        // Hide the type template
+        fieldCategory.style.display = 'none';
+      } else if (fieldCategory) {
+        fieldCategory.parentElement.style.display = 'none';
+      }
+
+      if (locationType && eachOpp.remoteInperson) {
+        locationType.textContent = eachOpp.remoteInperson;
+      } else if (locationType) {
+        locationType.parentElement.style.display = 'none';
+      }
+      if (amountValues && eachOpp.amount) {
+        amountValues.textContent = eachOpp.amount;
+      } else if (amountValues) {
+        amountValues.parentElement.style.display = 'none';
+      }
+
+      if (gradeValues && eachOpp.gradeLevelValues) {
+        gradeValues.textContent = eachOpp.gradeLevelValues;
+      } else if (gradeValues) {
+        gradeValues.parentElement.style.display = 'none';
+      }
+
+      if (typeFilter && eachOpp.types) {
+        eachOpp.types.forEach((eachType) => {
+          const newType = typeFilter.cloneNode(true);
+          newType.textContent = eachType;
+
+          typeFilter.parentElement.append(newType);
+        });
+        typeFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (fieldCategoryFilter && eachOpp.fieldCategories) {
+        eachOpp.fieldCategories.split(',').forEach((eachFieldCategory) => {
+          const newFieldCategory = fieldCategoryFilter.cloneNode(true);
           newFieldCategory.textContent = eachFieldCategory.trim();
 
-          fieldCategory.parentElement.append(newFieldCategory);
+          fieldCategoryFilter.parentElement.append(newFieldCategory);
         });
-      // Hide the type template
-      fieldCategory.style.display = 'none';
-    } else if (fieldCategory) {
-      fieldCategory.parentElement.style.display = 'none';
-    }
-
-    if (locationType && eachOpp.remoteInperson) {
-      locationType.textContent = eachOpp.remoteInperson;
-    } else if (locationType) {
-      locationType.parentElement.style.display = 'none';
-    }
-    if (amountValues && eachOpp.amount) {
-      amountValues.textContent = eachOpp.amount;
-    } else if (amountValues) {
-      amountValues.parentElement.style.display = 'none';
-    }
-
-    if (gradeValues && eachOpp.gradeLevelValues) {
-      gradeValues.textContent = eachOpp.gradeLevelValues;
-    } else if (gradeValues) {
-      gradeValues.parentElement.style.display = 'none';
-    }
-
-    if (typeFilter && eachOpp.types) {
-      eachOpp.types.forEach((eachType) => {
-        const newType = typeFilter.cloneNode(true);
-        newType.textContent = eachType;
-
-        typeFilter.parentElement.append(newType);
-      });
-      typeFilter.removeAttribute('fs-cmsfilter-field');
-    }
-
-    if (fieldCategoryFilter && eachOpp.fieldCategories) {
-      eachOpp.fieldCategories.split(',').forEach((eachFieldCategory) => {
-        const newFieldCategory = fieldCategoryFilter.cloneNode(true);
-        newFieldCategory.textContent = eachFieldCategory.trim();
-
-        fieldCategoryFilter.parentElement.append(newFieldCategory);
-      });
-      fieldCategoryFilter.removeAttribute('fs-cmsfilter-field');
-    }
-
-    if (fieldFilter && eachOpp.fields) {
-      eachOpp.fields.forEach((eachField) => {
-        const newField = fieldFilter.cloneNode(true);
-        newField.textContent = eachField;
-        fieldFilter.parentElement.append(newField);
-      });
-
-      fieldFilter.removeAttribute('fs-cmsfilter-field');
-    }
-
-    if (ageFilter && eachOpp.ageValues) {
-      eachOpp.ageValues.split(',').forEach((eachAge) => {
-        const newAge = ageFilter.cloneNode(true);
-        newAge.textContent = eachAge.trim();
-        ageFilter.parentElement.append(newAge);
-      });
-      ageFilter.removeAttribute('fs-cmsfilter-field');
-    }
-
-    if (gradeFilter && eachOpp.gradeLevelValues) {
-      eachOpp.gradeLevelValues.split(',').forEach((eachGrade) => {
-        const newGrade = gradeFilter.cloneNode(true);
-
-        newGrade.textContent = eachGrade.trim();
-
-        gradeFilter.parentElement.append(newGrade);
-      });
-      gradeFilter.removeAttribute('fs-cmsfilter-field');
-    }
-
-    if (timetableFilter && eachOpp.timetable) {
-      eachOpp.timetable.split(',').forEach((eachTimetable) => {
-        const newTimetable = timetableFilter.cloneNode(true);
-        newTimetable.textContent = eachTimetable.trim();
-        timetableFilter.parentElement.append(newTimetable);
-      });
-      timetableFilter.removeAttribute('fs-cmsfilter-field');
-    }
-
-    if (locationTypeFilter && eachOpp.remoteInperson) {
-      if (eachOpp.remoteInperson === 'Remote & In-person') {
-        const newLocationType = locationTypeFilter.cloneNode(true);
-        newLocationType.textContent = 'Remote';
-        locationTypeFilter.parentElement.append(newLocationType);
-        locationTypeFilter.textContent = 'In-person';
-      } else {
-        locationTypeFilter.textContent = eachOpp.remoteInperson;
+        fieldCategoryFilter.removeAttribute('fs-cmsfilter-field');
       }
-      // locationTypeFilter.removeAttribute('fs-cmsfilter-field');
-    }
 
-    if (locationCategoryFilter && eachOpp.locationCategory) {
-      eachOpp.locationCategory.forEach((eachLocationCategory) => {
-        const newLocationCategory = locationCategoryFilter.cloneNode(true);
-        newLocationCategory.textContent = eachLocationCategory;
-        locationCategoryFilter.parentElement.append(newLocationCategory);
+      if (fieldFilter && eachOpp.fields) {
+        eachOpp.fields.forEach((eachField) => {
+          const newField = fieldFilter.cloneNode(true);
+          newField.textContent = eachField;
+          fieldFilter.parentElement.append(newField);
+        });
+
+        fieldFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (ageFilter && eachOpp.ageValues) {
+        eachOpp.ageValues.split(',').forEach((eachAge) => {
+          const newAge = ageFilter.cloneNode(true);
+          newAge.textContent = eachAge.trim();
+          ageFilter.parentElement.append(newAge);
+        });
+        ageFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (gradeFilter && eachOpp.gradeLevelValues) {
+        eachOpp.gradeLevelValues.split(',').forEach((eachGrade) => {
+          const newGrade = gradeFilter.cloneNode(true);
+
+          newGrade.textContent = eachGrade.trim();
+
+          gradeFilter.parentElement.append(newGrade);
+        });
+        gradeFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (timetableFilter && eachOpp.timetable) {
+        eachOpp.timetable.split(',').forEach((eachTimetable) => {
+          const newTimetable = timetableFilter.cloneNode(true);
+          newTimetable.textContent = eachTimetable.trim();
+          timetableFilter.parentElement.append(newTimetable);
+        });
+        timetableFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (locationTypeFilter && eachOpp.remoteInperson) {
+        if (eachOpp.remoteInperson === 'Remote & In-person') {
+          const newLocationType = locationTypeFilter.cloneNode(true);
+          newLocationType.textContent = 'Remote';
+          locationTypeFilter.parentElement.append(newLocationType);
+          locationTypeFilter.textContent = 'In-person';
+        } else {
+          locationTypeFilter.textContent = eachOpp.remoteInperson;
+        }
+        // locationTypeFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (locationCategoryFilter && eachOpp.locationCategory) {
+        eachOpp.locationCategory.forEach((eachLocationCategory) => {
+          const newLocationCategory = locationCategoryFilter.cloneNode(true);
+          newLocationCategory.textContent = eachLocationCategory;
+          locationCategoryFilter.parentElement.append(newLocationCategory);
+        });
+        locationCategoryFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (locationFilter && eachOpp.location) {
+        eachOpp.location.split(',').forEach((eachLocation) => {
+          const newLocation = locationFilter.cloneNode(true);
+          newLocation.textContent = eachLocation.trim();
+          locationFilter.parentElement.append(newLocation);
+        });
+        locationFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (deadlineFilter && eachOpp.applicationDeadline) {
+        eachOpp.applicationDeadline.split(',').forEach((eachDeadline) => {
+          const newDeadline = deadlineFilter.cloneNode(true);
+          newDeadline.textContent = eachDeadline.trim();
+          deadlineFilter.parentElement.append(newDeadline);
+        });
+        deadlineFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (costFilter && eachOpp.amount) {
+        eachOpp.amount.split(',').forEach((eachAmount) => {
+          const newAmount = costFilter.cloneNode(true);
+          newAmount.textContent = eachAmount.trim();
+          costFilter.parentElement.append(newAmount);
+        });
+      }
+
+      if (costFilter && eachOpp.cost) {
+        eachOpp.cost.split(',').forEach((eachCost) => {
+          const newCost = costFilter.cloneNode(true);
+          newCost.textContent = eachCost.trim();
+          costFilter.parentElement.append(newCost);
+        });
+
+        costFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (financialAidFilter)
+        financialAidFilter.textContent = eachOpp.financialAid ? 'Financial Aid' : '';
+    };
+
+    // Adding event listener to like an opportunity
+    const likeItem = () => {
+      airtableIdValue.innerHTML = eachOpp.airtableId;
+
+      likeWrap?.addEventListener('click', () => {
+        const likedIcon = likeWrap.querySelector('[discover-element="liked-icon"]');
+        const airtableId = likeWrap.parentElement.querySelector(
+          '[discover-element="airtable-id"]'
+        ).innerHTML;
+        likeOpportunityUpdate(airtableId, likedIcon);
       });
-      locationCategoryFilter.removeAttribute('fs-cmsfilter-field');
-    }
+    };
 
-    if (locationFilter && eachOpp.location) {
-      eachOpp.location.split(',').forEach((eachLocation) => {
-        const newLocation = locationFilter.cloneNode(true);
-        newLocation.textContent = eachLocation.trim();
-        locationFilter.parentElement.append(newLocation);
-      });
-      locationFilter.removeAttribute('fs-cmsfilter-field');
-    }
+    populateFields();
+    likeItem();
 
-    if (deadlineFilter && eachOpp.applicationDeadline) {
-      eachOpp.applicationDeadline.split(',').forEach((eachDeadline) => {
-        const newDeadline = deadlineFilter.cloneNode(true);
-        newDeadline.textContent = eachDeadline.trim();
-        deadlineFilter.parentElement.append(newDeadline);
-      });
-      deadlineFilter.removeAttribute('fs-cmsfilter-field');
-    }
-
-    if (costFilter && eachOpp.amount) {
-      eachOpp.amount.split(',').forEach((eachAmount) => {
-        const newAmount = costFilter.cloneNode(true);
-        newAmount.textContent = eachAmount.trim();
-        costFilter.parentElement.append(newAmount);
-      });
-    }
-
-    if (costFilter && eachOpp.cost) {
-      eachOpp.cost.split(',').forEach((eachCost) => {
-        const newCost = costFilter.cloneNode(true);
-        newCost.textContent = eachCost.trim();
-        costFilter.parentElement.append(newCost);
-      });
-
-      costFilter.removeAttribute('fs-cmsfilter-field');
-    }
-
-    if (financialAidFilter)
-      financialAidFilter.textContent = eachOpp.financialAid ? 'Financial Aid' : '';
+    return newItem;
   };
-
-  // Adding event listener to like an opportunity
-  const likeItem = () => {
-    airtableIdValue.innerHTML = eachOpp.airtableId;
-
-    likeWrap?.addEventListener('click', () => {
-      const likedIcon = likeWrap.querySelector('[discover-element="liked-icon"]');
-      const airtableId = likeWrap.parentElement.querySelector(
-        '[discover-element="airtable-id"]'
-      ).innerHTML;
-      likeOpportunityUpdate(airtableId, likedIcon);
-    });
-  };
-
-  populateFields();
-  likeItem();
-
-  return newItem;
 };
 
-/**
- * Moving the fields into their field categories for filtering functionality
- */
-
+// Moving the fields into their field categories for filtering functionality
 const moveFields = () => {
   const fields = document.querySelectorAll('[discover-element="field-wrap"]');
   const fieldCategories = document.querySelectorAll('[discover-element="field-category-wrap"]');
@@ -799,3 +766,93 @@ const moveFields = () => {
 
   // });
 };
+
+// Save Searches ability if user is logged in
+const saveSearches = () => {
+  const saveSearchButton = document.querySelector('[discover-element="save-search-button"]');
+  const cancelSaveButton = document.querySelector('[discover-element="cancel-save-search"]');
+  const saveSearchSection = document.querySelector('[discover-element="section-save-search"]');
+  const saveSearchForm = document.querySelector('[discover-element="save-search-form"]');
+  const saveSearchFormInput = document.querySelector('[discover-element="save-search-input"]');
+
+  cancelSaveButton?.addEventListener('click', () => {
+    saveSearchFormInput.value = '';
+    saveSearchSection.style.display = 'none';
+  });
+
+  // Only show save search if filters are selected
+  saveSearchButton?.addEventListener('click', () => {
+    if (window.location.search === '') {
+      alert('Select atleast one filter to save search');
+    } else {
+      saveSearchSection.style.display = 'flex';
+    }
+  });
+
+  // When search is saved
+  $(saveSearchForm).submit(function (e) {
+    e.preventDefault();
+    const localSavedSearches = localStorage.getItem('savedSearches');
+    const searchName = saveSearchFormInput?.value;
+    const searchUrl = '/' + window.location.search;
+    const queryParams = new URLSearchParams(window.location.search);
+    const filterValues = Object.fromEntries(queryParams.entries());
+
+    // Loop through the query parameters and log their values
+    console.log({ searchUrl });
+    console.log({ filterValues });
+
+    const savedSearchJson = {
+      name: searchName,
+      searchUrl,
+      filterValues,
+    };
+
+    if (localSavedSearches === 'undefined' || localSavedSearches === '') {
+      // If there are currently no searches defined
+      const savedSearchesArray = [savedSearchJson];
+      const savedSearchesString = JSON.stringify(savedSearchesArray);
+      localStorage.setItem('savedSearches', savedSearchesString);
+      updateSearchesOnAirtable(savedSearchesString);
+
+      saveSearchSection.style.display = 'none';
+      saveSearchFormInput.value = '';
+
+      alert('Search Saved');
+    } else {
+      // If there are searches already existing
+      const localSavedSearchesArray = JSON.parse(localSavedSearches);
+      let searchNameUnique = true;
+
+      // Check if the search name is unique
+      localSavedSearchesArray.forEach((eachLocalSearch) => {
+        if (eachLocalSearch.name === searchName) {
+          searchNameUnique = false;
+        }
+      });
+
+      if (searchNameUnique) {
+        const savedSearchesArray = [...localSavedSearchesArray, savedSearchJson];
+        const savedSearchesString = JSON.stringify(savedSearchesArray);
+        localStorage.setItem('savedSearches', savedSearchesString);
+        updateSearchesOnAirtable(savedSearchesString);
+        saveSearchSection.style.display = 'none';
+        saveSearchFormInput.value = '';
+
+        alert('Search Saved');
+      } else {
+        alert('A saved search already exists with the same name.');
+      }
+    }
+
+    return false;
+  });
+};
+
+Webflow.push(function () {
+  // DOMready has fired on webflow
+  populateDateFromCms();
+  moveFields();
+
+  saveSearches();
+});
