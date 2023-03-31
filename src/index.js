@@ -146,6 +146,7 @@ const populateDateFromCms = () => {
     );
     const locationFilter = newItem.querySelector('[fs-cmsfilter-field="location"]');
     const deadlineFilter = newItem.querySelector('[fs-cmsfilter-field="deadline"]');
+    const durationFilter = newItem.querySelector('[fs-cmsfilter-field="duration"]');
     const costFilter = newItem.querySelector('[fs-cmsfilter-field="cost"]');
     const financialAidFilter = newItem.querySelector('[fs-cmsfilter-field="financial-aid"]');
 
@@ -312,6 +313,15 @@ const populateDateFromCms = () => {
           deadlineFilter.parentElement.append(newDeadline);
         });
         deadlineFilter.removeAttribute('fs-cmsfilter-field');
+      }
+
+      if (durationFilter && eachOpp.duration) {
+        eachOpp.duration.split(',').forEach((eachDuration) => {
+          const newDuration = durationFilter.cloneNode(true);
+          newDuration.textContent = eachDuration.trim();
+          durationFilter.parentElement.append(newDuration);
+        });
+        durationFilter.removeAttribute('fs-cmsfilter-field');
       }
 
       if (costFilter && eachOpp.amount) {
@@ -851,6 +861,7 @@ const saveSearches = () => {
 
 Webflow.push(function () {
   // DOMready has fired on webflow
+
   populateDateFromCms();
   moveFields();
 

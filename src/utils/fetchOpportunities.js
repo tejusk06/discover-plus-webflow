@@ -24,6 +24,8 @@ const fetchOpportunities = async () => {
     localStorage.setItem('cached_opportunities', JSON.stringify(data.allOpportunities));
     localStorage.setItem('cached_opportunities_timestamp', Date.now());
 
+    console.log(data.allOpportunities);
+
     return data.allOpportunities;
   } catch (error) {
     console.log(error);

@@ -142,6 +142,14 @@ const showSavedSearches = () => {
             '[discover-element="search-deadline"]'
           ).parentElement.style.display = 'none';
         }
+        if (filterValues.duration) {
+          newSearch.querySelector('[discover-element="search-duration"]').innerHTML =
+            filterValues.duration.replaceAll(',', ', ');
+        } else {
+          newSearch.querySelector(
+            '[discover-element="search-duration"]'
+          ).parentElement.style.display = 'none';
+        }
 
         if (filterValues.cost) {
           newSearch.querySelector('[discover-element="search-cost"]').innerHTML =
