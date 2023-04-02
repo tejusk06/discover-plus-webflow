@@ -859,11 +859,53 @@ const saveSearches = () => {
   });
 };
 
+// Toggle checkboxes selected/all categories text
+const showSelectedFilterText = () => {
+  document.addEventListener('click', function (e) {
+    if (e.target.type === 'checkbox') {
+      const parentDropdown = e.target.closest('[discover-element="home-filters-dropdown"]');
+
+      if (parentDropdown) {
+        // Only do logic if the checkbox is inside a dropdown
+        const allFiltersText = parentDropdown.querySelector(
+          '[discover-element="all-filters-text"]'
+        );
+        const selectedFiltersText = parentDropdown.querySelector(
+          '[discover-element="selected-filters-text"]'
+        );
+
+        const allCheckboxes = parentDropdown.querySelectorAll("input[type='checkbox']");
+
+        // Check if any checkbox is checked
+        let allunchecked = true;
+        for (let i = 0; i < allCheckboxes.length; i++) {
+          const checkbox = allCheckboxes[i];
+
+          // Check if the checkbox is checked
+          if (checkbox.checked) {
+            allunchecked = false;
+            // Break out of the loop
+            break;
+          }
+        }
+
+        if (allunchecked) {
+          allFiltersText.style.display = 'block';
+          selectedFiltersText.style.display = 'none';
+        } else {
+          allFiltersText.style.display = 'none';
+          selectedFiltersText.style.display = 'block';
+        }
+      }
+    }
+  });
+};
+
 Webflow.push(function () {
   // DOMready has fired on webflow
 
   populateDateFromCms();
   moveFields();
-
+  showSelectedFilterText();
   saveSearches();
 });
