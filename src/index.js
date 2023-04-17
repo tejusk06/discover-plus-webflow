@@ -3,6 +3,7 @@
 import { doc } from 'prettier';
 
 import fetchOpportunities from './utils/fetchOpportunities';
+import showAlert from './utils/showAlert';
 import updateSearchesOnAirtable from './utils/updateSearchesOnAirtable';
 
 //  Populate CMS Data from an external API.
@@ -780,6 +781,7 @@ const moveFields = () => {
 // Save Searches ability if user is logged in
 const saveSearches = () => {
   const saveSearchButton = document.querySelector('[discover-element="save-search-button"]');
+  const saveSearchSubmit = document.querySelector('[discover-element="save-search-submit"]');
   const cancelSaveButton = document.querySelector('[discover-element="cancel-save-search"]');
   const saveSearchSection = document.querySelector('[discover-element="section-save-search"]');
   const saveSearchForm = document.querySelector('[discover-element="save-search-form"]');
@@ -793,15 +795,17 @@ const saveSearches = () => {
   // Only show save search if filters are selected
   saveSearchButton?.addEventListener('click', () => {
     if (window.location.search === '') {
-      alert('Select atleast one filter to save search');
+      showAlert('Select atleast one filter to save search');
     } else {
       saveSearchSection.style.display = 'flex';
     }
   });
 
   // When search is saved
-  $(saveSearchForm).submit(function (e) {
-    e.preventDefault();
+  // $(saveSearchForm).submit(function (e) {
+  saveSearchSubmit.addEventListener('click', () => {
+    console.log('test');
+    // e.preventDefault();
     const localSavedSearches = localStorage.getItem('savedSearches');
     const searchName = saveSearchFormInput?.value;
     const searchUrl = '/' + window.location.search;
@@ -828,7 +832,8 @@ const saveSearches = () => {
       saveSearchSection.style.display = 'none';
       saveSearchFormInput.value = '';
 
-      alert('Search Saved');
+      // alert('Search Saved');
+      showAlert('Search Saved');
     } else {
       // If there are searches already existing
       const localSavedSearchesArray = JSON.parse(localSavedSearches);
@@ -849,14 +854,17 @@ const saveSearches = () => {
         saveSearchSection.style.display = 'none';
         saveSearchFormInput.value = '';
 
-        alert('Search Saved');
+        showAlert('Search Saved');
       } else {
-        alert('A saved search already exists with the same name.');
+        showAlert('A saved search already exists with the same name.');
       }
     }
 
-    return false;
+    // return false;
   });
+  // );
+
+  // });
 };
 
 // Toggle checkboxes selected/all categories text

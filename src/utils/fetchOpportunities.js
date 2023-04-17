@@ -11,9 +11,9 @@ const fetchOpportunities = async () => {
     if (cachedData && cachedTimestamp) {
       // Check if the cached data is still valid (not older than 1 hour)
       const ageInMilliseconds = Date.now() - cachedTimestamp;
-      const ageInMinutes = ageInMilliseconds / (1000 * 60);
+      const ageInSeconds = ageInMilliseconds / 1000;
 
-      if (ageInMinutes < 5) {
+      if (ageInSeconds < 2) {
         return JSON.parse(cachedData);
       }
     }
