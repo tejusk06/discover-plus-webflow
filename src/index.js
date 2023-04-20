@@ -131,6 +131,7 @@ const populateDateFromCms = () => {
     const name = newItem.querySelector('[discover-element="item-name"]');
     const locationType = newItem.querySelector('[discover-element="location-type"]');
     const amountValues = newItem.querySelector('[discover-element="amount-values"]');
+    const costText = newItem.querySelector('[discover-element="cost-text"]');
     const gradeValues = newItem.querySelector('[discover-element="grade-values"]');
     const airtableIdValue = newItem.querySelector('[discover-element="airtable-id"]');
 
@@ -210,6 +211,10 @@ const populateDateFromCms = () => {
         amountValues.textContent = eachOpp.amount;
       } else if (amountValues) {
         amountValues.parentElement.style.display = 'none';
+      }
+
+      if (costText && eachOpp.compensation) {
+        costText.textContent = 'Compensation:';
       }
 
       if (gradeValues && eachOpp.gradeLevelValues) {
