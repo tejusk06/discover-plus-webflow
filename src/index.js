@@ -786,11 +786,22 @@ const moveFields = () => {
 // Save Searches ability if user is logged in
 const saveSearches = () => {
   const saveSearchButton = document.querySelector('[discover-element="save-search-button"]');
+  const saveSearchNonMembers = document.querySelector(
+    '[discover-element="save-search-non-members"]'
+  );
   const saveSearchSubmit = document.querySelector('[discover-element="save-search-submit"]');
   const cancelSaveButton = document.querySelector('[discover-element="cancel-save-search"]');
   const saveSearchSection = document.querySelector('[discover-element="section-save-search"]');
   const saveSearchForm = document.querySelector('[discover-element="save-search-form"]');
   const saveSearchFormInput = document.querySelector('[discover-element="save-search-input"]');
+
+  saveSearchNonMembers?.addEventListener('click', () => {
+    showAlert('You need to Login In to save a search');
+    const closeAlertButton = document.querySelector('[discover-element="close-alert"]');
+
+    closeAlertButton.href = '/sign-in';
+    closeAlertButton.innerHTML = 'Log In';
+  });
 
   cancelSaveButton?.addEventListener('click', () => {
     saveSearchFormInput.value = '';
