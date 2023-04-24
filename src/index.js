@@ -892,6 +892,7 @@ const showSavedSearches = () => {
     const templateSavedSearch = document.querySelector(
       '[discover-element="template-saved-search"]'
     );
+    templateSavedSearch.style.display = 'block';
     const userCreated = localStorage.getItem('userCreated');
     const localSavedSearches = localStorage.getItem('savedSearches');
     if (userCreated) {
@@ -922,7 +923,7 @@ const showSavedSearches = () => {
       clearInterval(checkIfUserLoaded);
     }
     numOfTimesChecked++;
-    if (numOfTimesChecked > 20) {
+    if (numOfTimesChecked > 10) {
       clearInterval(checkIfUserLoaded);
     }
   }, 500);
