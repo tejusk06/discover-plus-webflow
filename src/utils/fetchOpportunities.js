@@ -13,7 +13,7 @@ const fetchOpportunities = async () => {
       const ageInMilliseconds = Date.now() - cachedTimestamp;
       const ageInSeconds = ageInMilliseconds / 1000;
 
-      if (ageInSeconds < 300) {
+      if (ageInSeconds < 2) {
         return JSON.parse(cachedData);
       }
     }
