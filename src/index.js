@@ -850,6 +850,7 @@ const saveSearches = () => {
 
       // alert('Search Saved');
       showAlert('Search Saved');
+      showSavedSearches();
     } else {
       // If there are searches already existing
       const localSavedSearchesArray = JSON.parse(localSavedSearches);
@@ -871,6 +872,7 @@ const saveSearches = () => {
         saveSearchFormInput.value = '';
 
         showAlert('Search Saved');
+        showSavedSearches();
       } else {
         showAlert('A saved search already exists with the same name.');
       }
@@ -881,6 +883,49 @@ const saveSearches = () => {
   // );
 
   // });
+};
+
+const showSavedSearches = () => {
+  let numOfTimesChecked = 0;
+  const checkIfUserLoaded = setInterval(() => {
+    console.log('checking if user loaded');
+    const templateSavedSearch = document.querySelector(
+      '[discover-element="template-saved-search"]'
+    );
+    const userCreated = localStorage.getItem('userCreated');
+    const localSavedSearches = localStorage.getItem('savedSearches');
+    if (userCreated) {
+      if (
+        localSavedSearches !== 'undefined' &&
+        localSavedSearches !== '[]' &&
+        localSavedSearches !== ''
+      ) {
+        // If there are searches already existing
+        const localSavedSearchesArray = JSON.parse(localSavedSearches);
+        while (templateSavedSearch.parentElement.children.length > 1) {
+          templateSavedSearch.parentElement.removeChild(
+            templateSavedSearch.parentElement.lastChild
+          );
+        }
+        templateSavedSearch.style.display = 'none';
+        localSavedSearchesArray.forEach((eachSavedSearch) => {
+          const newSearchLink = templateSavedSearch?.cloneNode(true);
+          newSearchLink.querySelector('.home_search_item-name').innerHTML = eachSavedSearch.name;
+          newSearchLink.href = `${eachSavedSearch.searchUrl}`;
+          newSearchLink.style.display = 'block';
+          templateSavedSearch.parentElement.appendChild(newSearchLink);
+        });
+      } else {
+        templateSavedSearch.querySelector('.home_search_item-name').innerHTML = 'No Saved Searches';
+        templateSavedSearch.style.display = 'block';
+      }
+      clearInterval(checkIfUserLoaded);
+    }
+    numOfTimesChecked++;
+    if (numOfTimesChecked > 20) {
+      clearInterval(checkIfUserLoaded);
+    }
+  }, 500);
 };
 
 // Toggle checkboxes selected/all categories text
@@ -932,4 +977,5 @@ Webflow.push(function () {
   moveFields();
   showSelectedFilterText();
   saveSearches();
+  showSavedSearches();
 });

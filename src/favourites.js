@@ -337,7 +337,7 @@ const createItem = (eachOpp, templateElement, likedOpportunities) => {
         if (likedOpportunities?.includes(eachOpp.airtableId)) {
           likeWrap.querySelector('[discover-element="liked-icon"]').style.color = '#E12122';
         }
-      }, 2000);
+      }, 1000);
     }
 
     itemWrap.addEventListener('click', (e) => {
