@@ -13,6 +13,9 @@ window.fsAttributes = window.fsAttributes || [];
 window.fsAttributes.push([
   'cmsload',
   async (listInstances) => {
+    // Show the saved searches
+    showSavedSearches();
+
     document.querySelector('[discover-element="opportunities-list"]').style.display = 'none';
 
     // Get the list instance
@@ -32,6 +35,11 @@ window.fsAttributes.push([
     // Get the current liked opportunties by the user
     const likedOpportunities = localStorage.getItem('likedOpportunities');
 
+    if (likedOpportunities !== 'undefined') {
+      document.querySelector('[discover-element="liked-opportunities-message"]').style.display =
+        'none';
+    }
+
     // Create the new items
     const newOpportunities = opportunities.map((eachOpp) =>
       createItem(eachOpp, oppTemplateElement, likedOpportunities)
@@ -41,8 +49,6 @@ window.fsAttributes.push([
     await listInstance.addItems(newOpportunities);
 
     document.querySelector('[discover-element="opportunities-list"]').style.display = 'grid';
-
-    showSavedSearches();
   },
 ]);
 
@@ -50,9 +56,13 @@ window.fsAttributes.push([
 const showSavedSearches = () => {
   const savedSearches = localStorage.getItem('savedSearches');
   const searchTemplate = document.querySelector('[discover-element="search-template"]');
-
-  console.log({ savedSearches });
-  if (savedSearches !== 'undefined' && savedSearches !== '') {
+  const savedSearchMessage = document.querySelector(
+    '[discover-element="favourites-search-message"]'
+  );
+  if (savedSearches !== 'undefined' && savedSearches !== '' && savedSearches !== '[]') {
+    if (savedSearchMessage) {
+      savedSearchMessage.style.display = 'none';
+    }
     const savedSearchesArray = JSON.parse(savedSearches);
 
     // Render each saved Search
@@ -174,7 +184,6 @@ const showSavedSearches = () => {
           .querySelector('[discover-element="delete-search"]')
           .addEventListener('click', () => {
             const searchElement = event.target.closest('[discover-element="search-template"]');
-            console.log('here');
             const searchName = searchElement.querySelector(
               '[discover-element="search-name"]'
             ).innerHTML;
@@ -190,7 +199,9 @@ const showSavedSearches = () => {
 
             const filteredSearchesString = JSON.stringify(filteredSearchesArray);
             localStorage.setItem('savedSearches', filteredSearchesString);
-            console.log(filteredSearchesString);
+            if (filteredSearchesString === '[]') {
+              savedSearchMessage.style.display = 'block';
+            }
             updateSearchesOnAirtable(filteredSearchesString);
             searchElement.remove();
           });
@@ -201,8 +212,6 @@ const showSavedSearches = () => {
 
       searchTemplate.parentElement.append(newSearch);
     });
-
-    console.log({ savedSearchesArray });
   }
 
   searchTemplate.style.display = 'none';
@@ -256,7 +265,7 @@ const likeOpportunityUpdate = async (airtableId, likedIcon) => {
       if (homeOppItem) {
         homeOppItem.style.display = 'none';
       }
-    }, 1000);
+    }, 500);
     likedOpportunitiesArray = likedOpportunities.split(',');
     updatedLikedOpportunitiesArray = likedOpportunitiesArray.filter((eachLikedOpportunitity) => {
       if (eachLikedOpportunitity === airtableId) {
@@ -267,8 +276,16 @@ const likeOpportunityUpdate = async (airtableId, likedIcon) => {
 
     if (updatedLikedOpportunitiesArray.length === 0) {
       localStorage.setItem('likedOpportunities', 'undefined');
+      setTimeout(() => {
+        document.querySelector('[discover-element="liked-opportunities-message"]').style.display =
+          'block';
+      }, 500);
     } else {
       localStorage.setItem('likedOpportunities', updatedLikedOpportunitiesArray);
+      setTimeout(() => {
+        document.querySelector('[discover-element="liked-opportunities-message"]').style.display =
+          'none';
+      }, 500);
     }
     updateOpportunityOnAirtable(updatedLikedOpportunitiesArray);
   } else {
