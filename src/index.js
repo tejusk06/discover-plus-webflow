@@ -796,7 +796,7 @@ const saveSearches = () => {
   const saveSearchFormInput = document.querySelector('[discover-element="save-search-input"]');
 
   saveSearchNonMembers?.addEventListener('click', () => {
-    showAlert('You need to Login In to save a search');
+    showAlert('Log in or create a free account to save this search criteria.');
     const closeAlertButton = document.querySelector('[discover-element="close-alert"]');
 
     closeAlertButton.href = '/sign-in';
