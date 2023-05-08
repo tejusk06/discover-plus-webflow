@@ -283,6 +283,12 @@ Webflow.push(function () {
           ageWrap.style.display = 'none';
         }
       });
+
+      if (profileType.value === 'Student') {
+        ageWrap.style.display = 'block';
+      } else {
+        ageWrap.style.display = 'none';
+      }
     } else {
       //  logged out logic here
     }
