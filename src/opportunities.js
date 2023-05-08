@@ -273,7 +273,6 @@ Webflow.push(function () {
       sectionOppMain.style.display = 'block';
     } else {
       const profileVisits = localStorage.getItem('profileVisits');
-      console.log({ profileVisits });
 
       if (!profileVisits) {
         localStorage.setItem('profileVisits', 1);
@@ -300,9 +299,7 @@ Webflow.push(function () {
           sidebarChildren[i].style.display = 'none';
         }
 
-        $(limitForm).submit(function (e) {
-          alert('Form submissions have been disabled during development.');
-
+        $(limitForm).submit(function () {
           localStorage.setItem('limitEmail', limitEmail.value);
           location.href = '/sign-up';
 
