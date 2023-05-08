@@ -6,27 +6,13 @@ Webflow.push(function () {
   const memberstack = window.$memberstackDom;
   memberstack.getCurrentMember().then(({ data: member }) => {
     if (member) {
-      console.log('local');
-      console.log('local');
       // logged in logic here
 
       const localImageFile = localStorage.getItem('imageFile');
       const localImageURL = localStorage.getItem('imageUrl');
 
-      // Update the Profile Image
-
-      if (localImageURL && localImageFile) {
-        document.querySelector('[discover-element="profile-image"]').src = localImageFile;
-      }
-
-      // Open the tab based on param
       const currentUrl = window.location.href;
       const urlParams = new URLSearchParams(new URL(currentUrl).search);
-
-      if (urlParams.has('tab')) {
-        const tabValue = urlParams.get('tab');
-        document.querySelector(`[data-w-tab="${tabValue}"]`).click();
-      }
 
       // Get passwords and buttons
       const updateButton = document.querySelector('[discover-element="update-password"]');
@@ -34,6 +20,37 @@ Webflow.push(function () {
       const passwordError = document.querySelector('.profile_header_form-error');
       const passwordInput = document.querySelector('[discover-element="new-password"]');
       const passwordInput2 = document.querySelector('[discover-element="new-password2"]');
+
+      const userTypes = localStorage.getItem('types');
+      let typesArray = userTypes?.split(',');
+      const userFields = localStorage.getItem('fields');
+      let fieldsArray = userFields?.split(',');
+      const allTypes = document.querySelectorAll('[discover-element="type-embed"]');
+      const allFields = document.querySelectorAll('[discover-element="field-embed"]');
+      const typeTemplate = document.querySelector('[discover-element="type-template"]');
+      const fieldTemplate = document.querySelector('[discover-element="field-template"]');
+
+      const fieldsForm = document.querySelector('[d-e="types-form"]');
+      const typesForm = document.querySelector('[d-e="fields-form"]');
+      const typesButton = document.querySelector('[d-e="update-types"]');
+      const fieldsButton = document.querySelector('[d-e="update-fields"]');
+
+      const form = document.getElementById('image-form');
+      const imageInput = document.querySelector('#image-input');
+
+      const profileType = document.querySelector('[data-ms-member="profile-type"]');
+      const ageWrap = document.querySelector('[discover-element="age-wrap"]');
+
+      // Update the Profile Image
+      if (localImageURL && localImageFile) {
+        document.querySelector('[discover-element="profile-image"]').src = localImageFile;
+      }
+
+      // Open the tab based on param
+      if (urlParams.has('tab')) {
+        const tabValue = urlParams.get('tab');
+        document.querySelector(`[data-w-tab="${tabValue}"]`).click();
+      }
 
       // CHeck is passwords match
       updateButton.addEventListener('click', () => {
@@ -48,14 +65,6 @@ Webflow.push(function () {
       });
 
       // Update the Types and Fields from local storage
-      const userTypes = localStorage.getItem('types');
-      let typesArray = userTypes?.split(',');
-      const userFields = localStorage.getItem('fields');
-      let fieldsArray = userFields?.split(',');
-      const allTypes = document.querySelectorAll('[discover-element="type-embed"]');
-      const allFields = document.querySelectorAll('[discover-element="field-embed"]');
-      const typeTemplate = document.querySelector('[discover-element="type-template"]');
-      const fieldTemplate = document.querySelector('[discover-element="field-template"]');
 
       const updateTypesOnPage = (source) => {
         typeTemplate.style.display = 'flex';
@@ -122,10 +131,6 @@ Webflow.push(function () {
       updateFieldsOnPage('localStorage');
 
       // Logic to update the Member types and fields
-      const fieldsForm = document.querySelector('[d-e="types-form"]');
-      const typesForm = document.querySelector('[d-e="fields-form"]');
-      const typesButton = document.querySelector('[d-e="update-types"]');
-      const fieldsButton = document.querySelector('[d-e="update-fields"]');
 
       // API to update user interests
       const updateUserInAirtable = (event, payload) => {
@@ -195,8 +200,6 @@ Webflow.push(function () {
       });
 
       // Manage user image upload
-      const form = document.getElementById('image-form');
-      const imageInput = document.querySelector('#image-input');
 
       imageInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
@@ -268,6 +271,16 @@ Webflow.push(function () {
         } else {
           document.querySelector('.profile_header_image-message').innerHTML = 'Error';
           console.error('Error uploading image:', response.status, response.statusText);
+        }
+      });
+
+      // Getting the value to select field and showing age dropdown
+      profileType.addEventListener('change', function (event) {
+        const selectedValue = event.target.value;
+        if (selectedValue === 'Student') {
+          ageWrap.style.display = 'block';
+        } else {
+          ageWrap.style.display = 'none';
         }
       });
     } else {

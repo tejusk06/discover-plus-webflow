@@ -798,7 +798,6 @@ const saveSearches = () => {
   saveSearchNonMembers?.addEventListener('click', () => {
     showAlert('Log in or create a free account to save this search criteria.');
     const closeAlertButton = document.querySelector('[discover-element="close-alert"]');
-
     closeAlertButton.href = '/sign-in';
     closeAlertButton.innerHTML = 'Log In';
   });
