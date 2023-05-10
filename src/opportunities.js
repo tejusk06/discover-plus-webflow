@@ -15,6 +15,9 @@ Webflow.push(function () {
     // Get timetable text in the header section
     const timetableText = document.querySelector('[discover-element="timetable-text"]');
 
+    // Get duration text in the header section
+    const durationText = document.querySelector('[discover-element="duration-text"]');
+
     // Get cost text in the header section
     const costText = document.querySelector('[discover-element="cost-text"]');
 
@@ -48,6 +51,23 @@ Webflow.push(function () {
 
       //   Removing the initial timetable text
       timetableText.remove();
+    }
+
+    // Checking if duration text exists
+    if (durationText) {
+      // Splitting into individual text
+      const durationTexts = durationText.innerHTML.split(',');
+
+      //   Creating individual text for each duration
+      durationTexts.forEach((eachDurationText) => {
+        const newDurationText = durationText.cloneNode(true);
+        newDurationText.innerHTML = eachDurationText;
+
+        durationText.parentElement.appendChild(newDurationText);
+      });
+
+      //   Removing the initial duration text
+      durationText.remove();
     }
 
     // Checking if cost text exists
@@ -115,21 +135,6 @@ Webflow.push(function () {
       });
 
       gradeWrap.remove();
-    }
-
-    // Checking if Grade Exists
-    if (durationWrap) {
-      const grades = durationWrap.firstChild.innerHTML.split(',');
-
-      grades.forEach((grade) => {
-        const newDurationWrap = durationWrap.cloneNode(true);
-
-        newDurationWrap.firstChild.innerHTML = grade;
-
-        durationWrap.parentElement.appendChild(newDurationWrap);
-      });
-
-      durationWrap.remove();
     }
 
     // Checking if Grade Exists
