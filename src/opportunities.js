@@ -272,6 +272,8 @@ Webflow.push(function () {
       showLikedOpportunity();
       sectionOppMain.style.display = 'block';
     } else {
+      // Logic to limit profile views
+      /*
       const profileVisits = localStorage.getItem('profileVisits');
 
       if (!profileVisits) {
@@ -306,6 +308,7 @@ Webflow.push(function () {
           return false;
         });
       }
+      */
     }
   });
 
