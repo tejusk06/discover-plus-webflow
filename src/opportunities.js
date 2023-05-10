@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { doc } from 'prettier';
 
 Webflow.push(function () {
   // DOMready has fired
@@ -10,6 +11,9 @@ Webflow.push(function () {
   const sectionOppMain = document.querySelector('[discover-element="section-opp-main"]');
   const limitForm = document.querySelector('[discover-element="limit-form"]');
   const limitEmail = document.querySelector('[discover-element="limit-email"]');
+  const expertFormUrl = document.querySelector('[discover-element="expert-form-opp-url"]');
+  const infoFormUrl = document.querySelector('[discover-element="info-form-opp-url"]');
+  const claimFormUrl = document.querySelector('[discover-element="claim-form-opp-url"]');
 
   const formatFields = () => {
     // Get timetable text in the header section
@@ -328,6 +332,16 @@ Webflow.push(function () {
       window.location.href = allOpportunitiesLink.href;
     }
   });
+
+  if (expertFormUrl) {
+    expertFormUrl.value = window.location.href;
+  }
+  if (infoFormUrl) {
+    infoFormUrl.value = window.location.href;
+  }
+  if (claimFormUrl) {
+    claimFormUrl.value = window.location.href;
+  }
 
   formatFields();
 });
