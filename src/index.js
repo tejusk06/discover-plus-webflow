@@ -24,7 +24,6 @@ const populateDateFromCms = () => {
 
       // Fetch external data
       const opportunities = await fetchOpportunities();
-      // console.log('opportunities', opportunities);
 
       // Remove existing items
       listInstance.clearItems();
@@ -39,16 +38,6 @@ const populateDateFromCms = () => {
 
       // Populate the list
       await listInstance.addItems(newOpportunities);
-
-      // Add logic to clear all tags when "Clear filters" is clicked
-      // const clearFiltersLink = document.querySelector('[discover-element="clear-filters"]');
-
-      // clearFiltersLink.addEventListener('click', () => {
-      //   const tagCloseLinks = document.querySelectorAll('[fs-cmsfilter-element="tag-remove"]');
-      //   tagCloseLinks.forEach((eachTagClose) => {
-      //     eachTagClose.click();
-      //   });
-      // });
     },
   ]);
 
@@ -72,7 +61,7 @@ const populateDateFromCms = () => {
         redirect: 'follow',
       };
 
-      fetch(`https://discover-plus-server.herokuapp.com/api/v1/user/11`, requestOptions)
+      fetch(`https://discover-plus-server.herokuapp.com/api/v1/user/1`, requestOptions)
         .then((response) => response.text())
         .then((result) => {
           return;
@@ -454,7 +443,6 @@ const moveFields = () => {
   );
 
   fieldsCheckboxesWrapper?.addEventListener('click', (e) => {
-    // console.log('clicked', e.target);
     const filtersList = e.target.closest('.home_filters_list');
     const scrollPostion = filtersList.scrollTop;
 
@@ -569,7 +557,6 @@ const moveFields = () => {
   );
 
   locationsCheckboxesWrapper?.addEventListener('click', (e) => {
-    // console.log('clicked', e.target);
     const filtersTabPane = e.target.closest('.home_filters_tab-pane');
     const scrollPostion = filtersTabPane.scrollTop;
 
@@ -767,7 +754,6 @@ const moveFields = () => {
 
               locationCheckboxes.forEach((eachLocation, index) => {
                 if (eachLocation.classList.contains('fs-cmsfilter_active')) {
-                  console.log('checkbox active');
                   setTimeout(() => {
                     eachLocation.click();
                   }, 100 * index);
@@ -779,8 +765,6 @@ const moveFields = () => {
       }
     });
   });
-
-  // });
 };
 
 // Save Searches ability if user is logged in
@@ -819,7 +803,6 @@ const saveSearches = () => {
   // When search is saved
   // $(saveSearchForm).submit(function (e) {
   saveSearchSubmit.addEventListener('click', () => {
-    console.log('test');
     // e.preventDefault();
     const localSavedSearches = localStorage.getItem('savedSearches');
     const searchName = saveSearchFormInput?.value;
@@ -828,8 +811,6 @@ const saveSearches = () => {
     const filterValues = Object.fromEntries(queryParams.entries());
 
     // Loop through the query parameters and log their values
-    console.log({ searchUrl });
-    console.log({ filterValues });
 
     const savedSearchJson = {
       name: searchName,
@@ -887,7 +868,7 @@ const saveSearches = () => {
 const showSavedSearches = () => {
   let numOfTimesChecked = 0;
   const checkIfUserLoaded = setInterval(() => {
-    console.log('checking if user loaded');
+    // Checking if user loaded
     const templateSavedSearch = document.querySelector(
       '[discover-element="template-saved-search"]'
     );

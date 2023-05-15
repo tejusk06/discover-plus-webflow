@@ -164,7 +164,6 @@ Webflow.push(function () {
               localStorage.setItem('fields', fieldsArray.join(','));
               document.querySelector('[discover-element="add-remove-fields"]')?.click();
             }
-            console.log(result);
           })
           .catch((error) => console.log('error', error));
       };
@@ -265,7 +264,6 @@ Webflow.push(function () {
 
         if (response.ok) {
           const jsonResponse = await response.json();
-          console.log('Image uploaded successfully', jsonResponse);
           fetchAndStoreImage(jsonResponse.imageUrl);
           document.querySelector('.profile_header_image-message').style.display = 'none';
         } else {

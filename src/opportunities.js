@@ -7,10 +7,11 @@ Webflow.push(function () {
   const allOpportunitiesLink = document.querySelector(
     '[discover-element="all-opportunities-link"]'
   );
+  //   Logic to limit profile views is disabled
   const sectionLimit = document.querySelector('[discover-element="section-limit"]');
-  const sectionOppMain = document.querySelector('[discover-element="section-opp-main"]');
   const limitForm = document.querySelector('[discover-element="limit-form"]');
   const limitEmail = document.querySelector('[discover-element="limit-email"]');
+  const sectionOppMain = document.querySelector('[discover-element="section-opp-main"]');
   const expertFormUrl = document.querySelector('[discover-element="expert-form-opp-url"]');
   const infoFormUrl = document.querySelector('[discover-element="info-form-opp-url"]');
   const claimFormUrl = document.querySelector('[discover-element="claim-form-opp-url"]');
