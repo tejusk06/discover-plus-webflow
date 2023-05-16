@@ -13,7 +13,7 @@ const fetchOpportunities = async () => {
       const ageInMilliseconds = Date.now() - cachedTimestamp;
       const ageInSeconds = ageInMilliseconds / 1000;
 
-      if (ageInSeconds < 2) {
+      if (ageInSeconds < 1800) {
         return JSON.parse(cachedData);
       }
     }
@@ -22,7 +22,7 @@ const fetchOpportunities = async () => {
     const data = await response.json();
 
     localStorage.setItem('cached_opportunities', JSON.stringify(data.allOpportunities));
-    localStorage.setItem('cached_opportunities_timestamp', Date.now());
+    localStorage.setItem('cached_opportunities_timestamp', data.cacheTime);
 
     // console.log(data.allOpportunities);
 
