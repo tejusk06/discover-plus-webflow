@@ -10,13 +10,10 @@ import updateSearchesOnAirtable from './utils/updateSearchesOnAirtable';
 const populateDateFromCms = () => {
   window.fsAttributes = window.fsAttributes || [];
   window.fsAttributes.push([
-    'cmsfilter',
-    async (filtersInstances) => {
-      // Get the filters instance
-      const [filtersInstance] = filtersInstances;
-
+    'cmsload',
+    async (listInstances) => {
       // Get the list instance
-      const { listInstance } = filtersInstance;
+      const [listInstance] = listInstances;
 
       // Save a copy of the template
       const [firstItem] = listInstance.items;
